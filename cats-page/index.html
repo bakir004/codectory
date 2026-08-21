@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="A cozy collection of fun facts about cats.">
+    <title>Cozy Cat Corner</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="script.js" defer></script>
+  </head>
+  <body>
+    <header class="hero">
+      <div class="hero__content">
+        <span class="hero__cat" aria-hidden="true">🐈</span>
+        <div>
+          <p class="eyebrow">Welcome, cat friend!</p>
+          <h1>Cozy Cat Corner</h1>
+          <p class="hero__intro">Curl up and discover a few delightful things about our whiskered companions.</p>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="facts" aria-labelledby="facts-heading">
+        <div class="section-heading">
+          <p class="eyebrow">Tiny truths</p>
+          <h2 id="facts-heading">Curious cat facts</h2>
+        </div>
+        <div class="facts__grid">
+          <article class="fact-card">
+            <span aria-hidden="true">🐾</span>
+            <h3>Quiet walkers</h3>
+            <p>Cats can move their front and back paws on the same side together when walking slowly.</p>
+          </article>
+          <article class="fact-card">
+            <span aria-hidden="true">💤</span>
+            <h3>Expert nappers</h3>
+            <p>Most cats sleep for 12 to 16 hours each day, saving energy for their next adventure.</p>
+          </article>
+          <article class="fact-card">
+            <span aria-hidden="true">👃</span>
+            <h3>Unique noses</h3>
+            <p>Like a human fingerprint, the pattern of bumps and ridges on every cat’s nose is unique.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="cat-message" aria-labelledby="message-heading">
+        <p class="eyebrow">A little extra</p>
+        <h2 id="message-heading">Need a cat-sized smile?</h2>
+        <button id="message-button" type="button" aria-controls="message-output">Show me a cat message</button>
+        <p id="message-output" class="message-output" role="status" aria-live="polite">Your next happy thought is one click away.</p>
+      </section>
+    </main>
+
+    <footer>
+      <p>Made with warm laps and happy purrs.</p>
+    </footer>
+  </body>
+</html>
