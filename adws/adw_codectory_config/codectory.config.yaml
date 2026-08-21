@@ -1,0 +1,21 @@
+defaults:
+  coding_agent: pi
+  model: openai-codex/gpt-5.6-sol
+  thinking: medium
+  harness_engineering: []
+  tools:
+  - read
+  - bash
+  - edit
+  - write
+  - grep
+  - find
+  - ls
+  protected_files:
+  - adws/adw_modules/
+  - adws/adw_codectory_config/
+  - adws/adw_*.py
+  data_dir: adws/adw_data
+observability:
+  db: adws/adw_data/codectory.db
+  poll_ms: 500

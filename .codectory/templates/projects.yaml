@@ -1,0 +1,25 @@
+# Deterministic checks used by CODECTORY quality phases.
+# Project paths are relative to the repository root. Each command is an argv
+# array (never a shell string) and runs with its project's path as cwd.
+projects:
+  adws:
+    path: adws
+    guides: guides
+    checks:
+      - name: python-compile
+        area: backend
+        operation: build
+        command: [python, -m, compileall, -q, .]
+        timeout_seconds: 120
+
+# Add your repository's real checks here. Supported operations are:
+# lint, format, typecheck, build, and test. Example:
+#  web:
+#    path: apps/web
+#    guides: guides
+#    checks:
+#      - name: unit-tests
+#        area: frontend
+#        operation: test
+#        command: [bun, test]
+#        timeout_seconds: 600
