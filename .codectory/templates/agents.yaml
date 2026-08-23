@@ -19,8 +19,8 @@ agents:
   - write
 - name: planner
   display_name: Atlas
-  model: openai-codex/gpt-5.6-luna
-  thinking: high
+  model: openai-codex/gpt-5.6-sol
+  thinking: medium
   color: '#a78bfa'
   purpose: Turn a request into a plan the builder can implement without asking questions.
   prompt_engineering:
@@ -37,6 +37,7 @@ agents:
   - write
 - name: builder
   display_name: Artemis
+  model: openai-codex/gpt-5.6-luna
   color: '#22d3ee'
   purpose: Implement the plan exactly; report every changed file in the envelope.
   prompt_engineering:
@@ -68,8 +69,8 @@ agents:
   - write
 - name: reviewer
   display_name: Thanatos
-  model: openai-codex/gpt-5.6-terra
-  thinking: high
+  model: openrouter/google/gemini-3.6-flash
+  thinking: medium
   color: '#fb7185'
   purpose: Confirm that what was built is what was asked for; change nothing.
   prompt_engineering:

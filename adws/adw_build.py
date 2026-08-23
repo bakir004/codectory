@@ -18,7 +18,6 @@ from adw_modules.data_types import AgentCall, BuildOutput, PhaseParams
 
 REQUIRED_AGENTS = ["builder"]
 
-
 def main(prompt: str, config: str = "adws/adw_codectory_config/codectory.config.yaml", adw_id: str | None = None) -> int:
     cfg = agents.load_config(config)
     agents.validate(cfg, REQUIRED_AGENTS)
