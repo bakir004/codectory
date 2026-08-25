@@ -1,0 +1,18 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+@theme inline {
+  --color-background: var(--background); --color-foreground: var(--foreground);
+  --color-card: var(--card); --color-card-foreground: var(--card-foreground);
+  --color-primary: var(--primary); --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary); --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted); --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent); --color-accent-foreground: var(--accent-foreground);
+  --color-border: var(--border); --color-input: var(--input); --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) * .6); --radius-md: calc(var(--radius) * .8); --radius-lg: var(--radius); --radius-xl: calc(var(--radius) * 1.4);
+}
+:root { --radius: .75rem; --background: oklch(.98 .012 90); --foreground: oklch(.22 .03 260); --card: oklch(1 0 0); --card-foreground: oklch(.22 .03 260); --primary: oklch(.32 .08 260); --primary-foreground: oklch(.98 .01 90); --secondary: oklch(.93 .035 90); --secondary-foreground: oklch(.3 .04 260); --muted: oklch(.94 .02 90); --muted-foreground: oklch(.48 .04 260); --accent: oklch(.92 .06 75); --accent-foreground: oklch(.3 .05 260); --border: oklch(.88 .025 260); --input: oklch(.88 .025 260); --ring: oklch(.55 .12 20); }
+.dark { --background: oklch(.16 .03 260); --foreground: oklch(.95 .01 90); --card: oklch(.2 .035 260); --card-foreground: oklch(.95 .01 90); --primary: oklch(.8 .08 75); --primary-foreground: oklch(.2 .03 260); --secondary: oklch(.27 .04 260); --secondary-foreground: oklch(.95 .01 90); --muted: oklch(.27 .04 260); --muted-foreground: oklch(.72 .03 260); --accent: oklch(.3 .06 260); --accent-foreground: oklch(.95 .01 90); --border: oklch(1 0 0 / 12%); --input: oklch(1 0 0 / 16%); --ring: oklch(.7 .1 20); }
+@layer base { * { @apply border-border outline-ring/50; } body { @apply bg-background text-foreground; margin: 0; font-family: ui-sans-serif, system-ui, sans-serif; } }
