@@ -2,7 +2,8 @@ defaults:
   coding_agent: pi
   model: openai-codex/gpt-5.6-sol
   thinking: medium
-  harness_engineering: []
+  harness_engineering:
+  - adws/adw_data/harness_engineering/guardrail/index.ts
   tools:
   - read
   - bash

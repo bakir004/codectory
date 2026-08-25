@@ -8,8 +8,8 @@ Usage:
     uv run <skill>/scripts/install.py [--force]
 
 Stamps: adws/ (modules + starter ADWs), adws/adw_data/prompt_engineering/,
-adws/adw_codectory_config/codectory.config.yaml, projects.yaml, .env.sample,
-and .gitignore entries.
+adws/adw_data/harness_engineering/, adws/adw_codectory_config/codectory.config.yaml,
+projects.yaml, .env.sample, and .gitignore entries.
 Existing files are skipped unless --force.
 """
 
@@ -69,6 +69,8 @@ def main() -> int:
     stamp(TEMPLATES / "adws", root / "adws", args.force, stamped, skipped)
     stamp(TEMPLATES / "prompt_engineering",
           root / "adws" / "adw_data" / "prompt_engineering", args.force, stamped, skipped)
+    stamp(TEMPLATES / "harness_engineering",
+          root / "adws" / "adw_data" / "harness_engineering", args.force, stamped, skipped)
     stamp(TEMPLATES / "codectory.config.yaml",
           root / "adws" / "adw_codectory_config" / "codectory.config.yaml",
           args.force, stamped, skipped)
