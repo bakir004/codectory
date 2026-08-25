@@ -1,7 +1,7 @@
 agents:
 - name: research
   display_name: Orion
-  model: openrouter/~google/gemini-flash-latest
+  model: openrouter/google/gemini-3.6-flash
   thinking: medium
   color: '#34d399'
   purpose: Look up current authoritative documentation through the Context7 CLI for
@@ -53,7 +53,7 @@ agents:
   - write
 - name: scout
   display_name: Apollo
-  model: openrouter/~anthropic/claude-haiku-latest
+  model: openai-codex/gpt-5.6-luna
   color: '#fbbf24'
   purpose: Find and report where things live; change nothing.
   prompt_engineering:

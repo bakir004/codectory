@@ -13,7 +13,7 @@ import time
 from contextlib import contextmanager
 from pathlib import Path
 
-from . import agents, git_helper
+from . import agents, git_helper, guidance
 from .console import Console
 from .data_types import AgentCall, EnvelopeBase, EventRecord, Phase, PhaseParams
 from .utils import ensure_dir, now_iso
@@ -59,6 +59,9 @@ class Run:
         self._agent_map_path = self.session_dir / "agent_map.json"
         self.agent_map: dict = (json.loads(self._agent_map_path.read_text())
                                 if self._agent_map_path.exists() else {})
+        # Guides are core factory context, not a workflow-specific phase. Every
+        # agent receives this same packet through agents.execute().
+        self.project_guides = guidance.load(self)
 
     # ── agent map (adw_id -> per-agent coding-agent session ids) ────────────
     def save_agent_map(self, agent: str, entry: dict) -> None:

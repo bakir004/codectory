@@ -1,19 +1,4 @@
 {
-  "mode": "whitelist",
-  "allowed": [
-    "git",
-    "rg",
-    "grep",
-    "find",
-    "ls",
-    "cat",
-    "sed",
-    "awk"
-  ],
-  "blocked": [
-    "sudo",
-    "rm",
-    "curl",
-    "wget"
-  ]
+  "whitelist": [],
+  "blacklist": ["curl"]
 }

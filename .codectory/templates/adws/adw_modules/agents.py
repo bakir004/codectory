@@ -87,6 +87,27 @@ def execute(run, phase: Phase, call: AgentCall) -> EnvelopeBase:
     agent = resolve(run.cfg, phase.params.owner)
     agent_dir = run.session_dir / agent.name
     agent_dir.mkdir(parents=True, exist_ok=True)
+    required_guides = getattr(run, "project_guide_paths", frozenset())
+    if required_guides and agent.tools is not None and "read" not in agent.tools:
+        raise RuntimeError(
+            f"agent {agent.name!r} cannot satisfy required project-guide reads: "
+            "add 'read' to its tools allowlist")
+    guides_read: set[str] = set()
+
+    def record_guide_read(record: dict) -> None:
+        if record.get("tool") != "read" or not record.get("ok"):
+            return
+        path = record.get("args", {}).get("path")
+        if not isinstance(path, str):
+            return
+        candidate = Path(path)
+        resolved = candidate.resolve() if candidate.is_absolute() else (run.repo_root / candidate).resolve()
+        try:
+            relative = resolved.relative_to(run.repo_root).as_posix()
+        except ValueError:
+            return
+        if relative in required_guides:
+            guides_read.add(relative)
 
     variables = {
         "prompt": call.prompt,
@@ -95,6 +116,9 @@ def execute(run, phase: Phase, call: AgentCall) -> EnvelopeBase:
     }
     system_text = prompts.render(agent.prompt_engineering.system, variables)
     user_text = prompts.render(agent.prompt_engineering.user, variables)
+    # Project guides are factory context: every agent sees the same validated
+    # packet, regardless of which ADW happened to call it.
+    user_text = f"{user_text.rstrip()}\n\n{run.project_guides}"
     prompts.save(agent_dir / "prompts", "system.md", system_text)
     prompts.save(agent_dir / "prompts", "user.md", user_text)
 
@@ -133,7 +157,7 @@ def execute(run, phase: Phase, call: AgentCall) -> EnvelopeBase:
         )
         result = agent_pi.run(
             request,
-            on_event=_event_forwarder(run, phase, agent.name),
+            on_event=_event_forwarder(run, phase, agent.name, record_guide_read),
             on_spawn=lambda pid: run.tracer.process_start(
                 run.adw_id, "agent", agent.name, pid,
                 f"{agent.coding_agent} {agent.name} {agent.model}"),
@@ -151,10 +175,19 @@ def execute(run, phase: Phase, call: AgentCall) -> EnvelopeBase:
     result = send(user_text)
     envelope, attempt = _parse_with_retries(run, phase, call, result, send)
 
+    # Project guides are enforced at the common agent-call boundary, so every
+    # ADW receives the same proof requirement without adding workflow phases.
+    def guides_read_gate(_envelope, _run):
+        return [f"project guide was not read with the read tool: {path}"
+                for path in sorted(required_guides - guides_read)]
+
+    guides_read_gate.__name__ = "project_guides_read"
+    all_gates = [*call.gates, guides_read_gate] if required_guides else call.gates
+
     # claim gates — violations flow back into the SAME session as corrections
     for gate_attempt in range(1, max(1, phase.params.retries + 1) + 1):
         violations = []
-        for gate in call.gates:
+        for gate in all_gates:
             report = _as_report(gate(envelope, run))
             found = report.violations
             run.tracer.gate_row(phase, gate.__name__, report, gate_attempt)
@@ -239,7 +272,7 @@ def _agent_session_id(run, agent: AgentConfig) -> str:
     return f"codectory-{run.adw_id}-{agent.name}-{new_id(4)}"
 
 
-def _event_forwarder(run, phase: Phase, agent_name: str):
+def _event_forwarder(run, phase: Phase, agent_name: str, on_tool=None):
     """One tool_call event per real tool call, with its exact args and result."""
     tracker = agent_pi.ToolCallTracker()
 
@@ -247,6 +280,8 @@ def _event_forwarder(run, phase: Phase, agent_name: str):
         record = tracker.observe(event)
         if record is None:
             return
+        if on_tool:
+            on_tool(record)
         # The call's span rides the columns; duration_ms stays in the payload as
         # pi's own authoritative number.
         run.tracer.event(EventRecord(adw_id=run.adw_id, phase_id=phase.phase_id,

@@ -4,22 +4,24 @@
 projects:
   adws:
     path: adws
-    guides: guides
+    guides: guides/adws
     checks:
       - name: python-compile
         area: backend
         operation: build
         command: [python, -m, compileall, -q, .]
         timeout_seconds: 120
-
-# Add your repository's real checks here. Supported operations are:
-# lint, format, typecheck, build, and test. Example:
-#  web:
-#    path: apps/web
-#    guides: guides
-#    checks:
-#      - name: unit-tests
-#        area: frontend
-#        operation: test
-#        command: [bun, test]
-#        timeout_seconds: 600
+  web:
+    path: web
+    guides: guides/web
+    checks:
+      - name: lint
+        area: frontend
+        operation: lint
+        command: [bun, run, lint]
+        timeout_seconds: 120
+      - name: build
+        area: frontend
+        operation: build
+        command: [bun, run, build]
+        timeout_seconds: 300

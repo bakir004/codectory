@@ -4,7 +4,7 @@
 projects:
   adws:
     path: adws
-    guides: guides
+    guides: guides/adws
     checks:
       - name: python-compile
         area: backend

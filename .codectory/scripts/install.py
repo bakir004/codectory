@@ -79,6 +79,7 @@ def main() -> int:
           args.force, stamped, skipped)
     stamp(TEMPLATES / "projects.yaml", root / "projects.yaml",
           args.force, stamped, skipped)
+    stamp(TEMPLATES / "guides", root / "guides", args.force, stamped, skipped)
     stamp(TEMPLATES / "env.sample", root / ".env.sample", args.force, stamped, skipped)
     # The recipes are part of the operating experience, and several cookbooks
     # plus the run banner tell you to use them, so a stamped repo has to have

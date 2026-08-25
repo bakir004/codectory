@@ -45,6 +45,16 @@ repository; project and check names must be unique and safe as artifact path
 segments. Invalid configuration fails before any command starts and reports the
 field that is malformed.
 
+## Project guides
+
+`guides` is not optional operational metadata: it is the directory of Markdown
+rules the factory injects into **every agent call**. It must exist and contain a
+`README.md` index; all Markdown files beneath it are written into the run's
+`context_handoff/project_guides.md` and appended to every agent prompt. Put
+architecture, code style, testing, and documentation rules there. The
+engineer's explicit request wins over a conflicting guide; agents must name the
+override in their report rather than silently ignoring the rule.
+
 ## Changed projects and scope
 
 At run start CODECTORY pins `HEAD`. For `scope="changed"`, quality asks Git for

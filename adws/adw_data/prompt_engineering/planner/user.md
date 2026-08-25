@@ -26,7 +26,8 @@ Plan the work described in `prompt`.
    - **Copy it, do not retype it.** One bash call does the whole step:
      `mkdir -p specs && cp "<context_handoff_dir>/plan.md" "specs/<adw_id>_<slug>.md"`
      Writing the plan a second time through `write` re-emits every line you already wrote, which costs the whole document again in output tokens and lets the two copies drift.
-3. Emit your `Report` JSON, declaring BOTH paths in `artifacts`.
+3. Decide whether the implementation depends on current external library, framework, API, or tool documentation. Set `research_required` to `true` only when that documentation must be retrieved before implementation, and list the exact subjects in `research_topics`. Otherwise set it to `false` and use an empty list.
+4. Emit your `Report` JSON, declaring BOTH paths in `artifacts`.
 
 ## Report
 
@@ -38,6 +39,8 @@ Respond with ONLY valid JSON matching `PlanOutput` — no prose before or after:
   "summary": "<one sentence describing the plan>",
   "artifacts": ["<context_handoff_dir>/plan.md", "specs/<adw_id>_<slug>.md"],
   "commit_message": "<imperative one-line git subject for committing THIS PLAN DOCUMENT, not the work it describes — e.g. 'Add spec for the /health endpoint'>",
+  "research_required": false,
+  "research_topics": [],
   "notes_for_next_agent": "<what the builder must know>"
 }
 ```

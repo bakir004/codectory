@@ -9,31 +9,21 @@ import {
 } from "@earendil-works/pi-coding-agent";
 
 type Policy = {
-  /** In whitelist mode, every external executable must be listed in allowed. */
-  mode: "whitelist" | "blacklist";
-  allowed: string[];
-  blocked: string[];
+  whitelist: string[];
+  blacklist: string[];
 };
 
 const POLICY_FILE = "guardrail-policy.json";
 let parser: any;
 
 const DEFAULT_POLICY: Policy = {
-  mode: "whitelist",
-  // Shells and interpreters are deliberately absent: allowing one defeats a
-  // command allowlist because it can execute arbitrary code.
-  allowed: ["git", "rg", "grep", "find", "ls", "cat", "sed", "awk"],
-  blocked: ["bash", "sh", "zsh", "fish", "dash", "sudo", "su", "doas", "env", "eval", "exec", "source", ".", "xargs", "curl", "wget", "nc", "ncat", "netcat"],
+  whitelist: [],
+  blacklist: ["curl"],
 };
 
 const SHELL_BUILTINS = new Set([
   "cd", "pwd", "echo", "printf", "true", "false", "test", "[", "[[", "wait", "read", "export", "unset", "umask", "ulimit", "set", "shift", "type", "hash", "dirs", "pushd", "popd",
 ]);
-const DYNAMIC_NODE_TYPES = new Set([
-  "command_substitution", "process_substitution", "variable_expansion", "expansion",
-  "heredoc_redirect", "function_definition",
-]);
-
 function normalise(items: string[] | undefined): Set<string> {
   return new Set((items ?? []).map((item) => item.trim()).filter(Boolean));
 }
@@ -42,13 +32,16 @@ async function loadPolicy(): Promise<Policy> {
   const file = resolve(__dirname, POLICY_FILE);
   try {
     const parsed = JSON.parse(await readFile(file, "utf8")) as Partial<Policy>;
-    if (parsed.mode !== "whitelist" && parsed.mode !== "blacklist") {
-      throw new Error('"mode" must be "whitelist" or "blacklist"');
+    if (!Array.isArray(parsed.whitelist) || !Array.isArray(parsed.blacklist)) {
+      throw new Error('"whitelist" and "blacklist" must be arrays');
     }
-    if (!Array.isArray(parsed.allowed) || !Array.isArray(parsed.blocked)) {
-      throw new Error('"allowed" and "blocked" must be arrays');
+    const whitelist = normalise(parsed.whitelist);
+    const blacklist = normalise(parsed.blacklist);
+    const overlap = [...whitelist].filter((item) => blacklist.has(item));
+    if (overlap.length) {
+      throw new Error(`an executable cannot be in both lists: ${overlap.join(", ")}`);
     }
-    return { mode: parsed.mode, allowed: parsed.allowed, blocked: parsed.blocked };
+    return { whitelist: [...whitelist], blacklist: [...blacklist] };
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === "ENOENT") return DEFAULT_POLICY;
     throw error;
@@ -67,21 +60,11 @@ function executableCommands(command: string): string[] {
 
   const executables: string[] = [];
   walk(tree.rootNode, (node) => {
-    if (DYNAMIC_NODE_TYPES.has(node.type)) {
-      throw new Error(`dynamic Bash construct is not permitted: ${node.type}`);
-    }
     if (node.type !== "command") return;
 
     const name = node.namedChildren.find((child: any) => child.type === "command_name");
-    if (!name) throw new Error("Bash command has no static executable name");
-    if (name.namedChildCount !== 1 || name.namedChildren[0].type !== "word") {
-      throw new Error(`dynamic Bash executable is not permitted: ${name.text}`);
-    }
-
-    const executable = name.text;
-    if (executable.includes("/") || executable.includes("$")) {
-      throw new Error(`path-based or dynamic executable is not permitted: ${executable}`);
-    }
+    if (!name) return;
+    const executable = name.text.split("/").at(-1) ?? name.text;
     if (!SHELL_BUILTINS.has(executable)) executables.push(executable);
   });
   return executables;
@@ -103,15 +86,13 @@ export default async function (pi: ExtensionAPI) {
       policy = await loadPolicy();
       commands = executableCommands(event.input.command);
     } catch (error) {
-      // Policy errors and syntax we cannot safely analyse are denied.
-      return {
-        block: true,
-        reason: `Guardrail blocked this Bash call because it cannot safely analyse it (${(error as Error).message}). Do not retry this command or attempt to bypass the guardrail. Find an allowed alternative; if this goal genuinely requires the blocked operation, ask the user for permission before proceeding.`,
-      };
+      // This guardrail blocks curl only; do not turn an unparseable command
+      // into a broader restriction.
+      return;
     }
 
-    const allowed = normalise(policy.allowed);
-    const blocked = normalise([...DEFAULT_POLICY.blocked, ...policy.blocked]);
+    const allowed = normalise(policy.whitelist);
+    const blocked = normalise(policy.blacklist);
     for (const executable of commands) {
       if (blocked.has(executable)) {
         return {
@@ -119,10 +100,10 @@ export default async function (pi: ExtensionAPI) {
           reason: `Guardrail blocked the executable "${executable}". Do not retry it or attempt to bypass this restriction. Find an allowed alternative; if the task can only be completed with "${executable}", ask the user for permission before proceeding.`,
         };
       }
-      if (policy.mode === "whitelist" && !allowed.has(executable)) {
+      if (allowed.size && !allowed.has(executable)) {
         return {
           block: true,
-          reason: `Guardrail does not whitelist the executable "${executable}". Do not retry it or attempt to bypass this restriction. Find an allowed alternative; if the task can only be completed with "${executable}", ask the user for permission before proceeding.`,
+          reason: `Guardrail does not whitelist the executable "${executable}".`,
         };
       }
     }

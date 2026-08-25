@@ -16,7 +16,7 @@
 
 ## Task
 
-Implement the work described in `prompt`, guided by `previous_envelope` if present, then emit your `Report` JSON.
+Implement the work described in `prompt`. Always read `<context_handoff_dir>/plan.md` before changing code. If `previous_envelope` contains review findings, resolve every blocking finding while preserving the plan's accepted scope, then emit your `Report` JSON.
 
 ## Report
 

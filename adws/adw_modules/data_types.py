@@ -90,6 +90,8 @@ class PlanOutput(EnvelopeBase):
     # work product, so a chain that commits per step never reuses one agent's
     # words for another agent's diff.
     commit_message: str = ""
+    research_required: bool = False
+    research_topics: list[str] = Field(default_factory=list)
 
 
 class BuildOutput(EnvelopeBase):
