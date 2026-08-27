@@ -9,6 +9,7 @@ require a parsed envelope + green gates, enforced inside ph.call).
 from __future__ import annotations
 
 import json
+import os
 import time
 from contextlib import contextmanager
 from pathlib import Path
@@ -59,6 +60,12 @@ class Run:
         self._agent_map_path = self.session_dir / "agent_map.json"
         self.agent_map: dict = (json.loads(self._agent_map_path.read_text())
                                 if self._agent_map_path.exists() else {})
+        scope = os.environ.get("CODECTORY_PROJECTS", "")
+        self.project_scope = tuple(name.strip() for name in scope.split(",") if name.strip())
+        if not self.project_scope:
+            raise RuntimeError(
+                "CODECTORY_PROJECTS is required (comma-separated configured projects); "
+                "the workflow harness must declare every project the request might touch")
         # Guides are core factory context, not a workflow-specific phase. Every
         # agent receives this same packet through agents.execute().
         self.project_guides = guidance.load(self)

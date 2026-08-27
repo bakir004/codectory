@@ -472,7 +472,8 @@ function selectPhase(p: Phase) {
       </span>
     </div>
 
-    <div v-if="phases.length" class="waterfall">
+    <div class="trace-layout" :class="{ 'has-detail': selectedPhase }">
+      <div v-if="phases.length" class="waterfall">
       <div class="row axis-row">
         <div class="label" />
         <div class="track">
@@ -571,20 +572,21 @@ function selectPhase(p: Phase) {
           </button>
         </div>
       </div>
-    </div>
-    <div v-else-if="loaded" class="empty-state">no phases recorded for this session</div>
-    <div v-else-if="!apiError" class="empty-state">loading trace…</div>
+      </div>
+      <div v-else-if="loaded" class="empty-state">no phases recorded for this session</div>
+      <div v-else-if="!apiError" class="empty-state">loading trace…</div>
 
-    <PhaseDetail
-      v-if="selectedPhase"
-      :phase="selectedPhase"
-      :events="events"
-      :envelopes="envelopes"
-      :gates="gates"
-      :handoff="handoff"
-      :handoff-error="handoffError"
-      @close="navigate(props.adwId)"
-    />
+      <PhaseDetail
+        v-if="selectedPhase"
+        :phase="selectedPhase"
+        :events="events"
+        :envelopes="envelopes"
+        :gates="gates"
+        :handoff="handoff"
+        :handoff-error="handoffError"
+        @close="navigate(props.adwId)"
+      />
+    </div>
   </div>
 </template>
 
@@ -617,12 +619,32 @@ function selectPhase(p: Phase) {
   flex-wrap: wrap;
 }
 
-.waterfall {
+.trace-layout {
   margin: 20px 28px;
+}
+
+.trace-layout.has-detail {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(360px, 2fr);
+  align-items: start;
+  gap: 20px;
+}
+
+.waterfall {
   border: 1px solid var(--border-soft);
   border-radius: 16px;
   background: var(--surface);
   overflow: hidden;
+}
+
+.trace-layout:not(.has-detail) .waterfall {
+  margin: 0;
+}
+
+@media (max-width: 1200px) {
+  .trace-layout.has-detail {
+    grid-template-columns: 1fr;
+  }
 }
 
 .row {

@@ -52,6 +52,10 @@ plan *ARGS:
 plan-build *ARGS:
     uv run adws/adw_plan_build.py --config {{config}} "$@"
 
+# build, deterministic quality, and review: CODECTORY_PROJECTS=web just build-quality-review "change the web UI"
+build-quality-review *ARGS:
+    uv run adws/adw_build_quality_review.py --config {{config}} "$@"
+
 # plan, build, test, commit: just sdlc "add a /health endpoint"
 sdlc *ARGS:
     uv run adws/adw_plan_build_test.py --config {{config}} "$@"

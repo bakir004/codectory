@@ -798,7 +798,7 @@ function bytesLabel(bytes: number): string {
 
 <style scoped>
 .detail {
-  margin: 0 28px 28px;
+  margin: 0;
   border: 1px solid var(--border-soft);
   border-radius: 16px;
   background: var(--surface);

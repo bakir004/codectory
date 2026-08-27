@@ -22,6 +22,7 @@ class GuidanceTests(unittest.TestCase):
             repo_root=self.root,
             context_handoff_dir=self.handoff,
             cfg=SimpleNamespace(config_path=""),
+            project_scope=("app",),
         )
 
     def tearDown(self):

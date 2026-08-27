@@ -167,10 +167,23 @@ def execute(run, phase: Phase, call: AgentCall) -> EnvelopeBase:
         latest = result
         return result
 
-    # What the tree looked like before this agent got its hands on it. Every
-    # send in this phase — first prompt, JSON retries, gate corrections — is
-    # measured against this one baseline.
+    # What the tree looked like before this agent gets any turn. The mandatory
+    # guide briefing is part of the phase and may not evade write enforcement.
     tree_before = permissions.snapshot(run)
+    if required_guides:
+        guide_list = "\n".join(f"- {path}" for path in sorted(required_guides))
+        send(
+            "Before beginning your assigned task, use the read tool to read EVERY "
+            "project guide listed below. Do not plan, edit, or run other commands in "
+            "this turn. These are the only projects the workflow harness declared as "
+            "possibly in scope.\n\n"
+            f"{guide_list}\n\n"
+            "After reading them, briefly acknowledge completion; your task will follow."
+        )
+        missing = sorted(required_guides - guides_read)
+        if missing:
+            raise GateFailure("agent did not read required project guides at phase start:\n- "
+                               + "\n- ".join(missing))
 
     result = send(user_text)
     envelope, attempt = _parse_with_retries(run, phase, call, result, send)

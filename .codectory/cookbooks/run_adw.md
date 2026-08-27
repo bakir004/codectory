@@ -23,6 +23,22 @@ uv run adws/<recon-chain>.py "where is auth handled" --config path/to/other.conf
 
 The prompt is inline text or a file path. Launch in the background so you can poll while it works; the `adw_id` is printed on startup — capture it, everything else keys off it.
 
+### Declare project scope
+
+Every launch must declare every configured project the request **might** touch.
+This is a harness decision, not an agent guess: it selects the project guides
+that every agent must read before its task prompt is sent.
+
+```bash
+CODECTORY_PROJECTS=web uv run adws/adw_simple_sdlc.py "change the web UI"
+CODECTORY_PROJECTS=web,api uv run adws/adw_simple_sdlc.py "add a UI action and its API"
+```
+
+An omitted or unknown project name fails before an agent starts. Declare a
+project when there is any plausible cross-project change; extra scope costs
+only the relevant guide reads, while missing scope leaves an agent without a
+rule it needed.
+
 ### Listen for the roster
 
 The chain says *what runs*; the config says *who runs it*. **If the engineer references a roster, a config, or a model tier, pass it — do not fall through to the default.**

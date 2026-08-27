@@ -17,6 +17,13 @@ def load(run) -> str:
     """Validate every configured guide set and return its immutable prompt packet."""
     config = quality.load_projects(run)
     root = Path(run.repo_root).resolve()
+    configured = {project.name: project for project in config.projects}
+    unknown = sorted(set(run.project_scope) - configured.keys())
+    if unknown:
+        raise RuntimeError(
+            f"CODECTORY_PROJECTS names unknown project(s): {', '.join(unknown)}; "
+            f"configured: {', '.join(sorted(configured))}")
+    projects = [configured[name] for name in run.project_scope]
     paths: list[str] = []
     sections: list[str] = [
         "## Project guides (factory-provided)",
@@ -26,7 +33,7 @@ def load(run) -> str:
         "explicitly in your report rather than silently ignoring the guide.",
     ]
 
-    for project in config.projects:
+    for project in projects:
         guide_dir = (root / project.guides).resolve()
         if not guide_dir.is_dir():
             raise RuntimeError(
@@ -53,6 +60,7 @@ def load(run) -> str:
             sections.append(f"\n#### {relative}\n\n{resolved.read_text()}")
 
     run.project_guide_paths = frozenset(paths)
+    run.project_guides_scope = tuple(project.name for project in projects)
     packet = "\n".join(sections).rstrip() + "\n"
     (run.context_handoff_dir / "project_guides.md").write_text(packet)
     return packet
