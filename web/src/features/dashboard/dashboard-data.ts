@@ -1,7 +1,6 @@
 export type Activity = { id: string; date: string; title: string; category: string; location?: string }
 export type Assignment = { id: string; title: string; course: string; due: string; status: 'Not started' | 'In progress' | 'Submitted' }
 export type Score = { id: string; title: string; course: string; earned: number; possible: number; graded: string }
-export type Announcement = { id: string; author: string; source: 'Professor' | 'Administration'; posted: string; excerpt: string }
 export type Course = { id: string; code: string; title: string; professor: string; meeting: string; progress: number }
 
 export const upcomingActivities: Activity[] = [
@@ -18,10 +17,6 @@ export const scores: Score[] = [
   { id: 's1', title: 'Lab report: Motion', course: 'PHYS 105', earned: 92, possible: 100, graded: '2026-04-08' },
   { id: 's2', title: 'Reading response 5', course: 'HIST 240', earned: 18, possible: 20, graded: '2026-04-05' },
   { id: 's3', title: 'Quiz 3', course: 'MATH 202', earned: 45, possible: 50, graded: '2026-04-02' },
-]
-export const announcements: Announcement[] = [
-  { id: 'n1', author: 'Dr. Maya Chen', source: 'Professor', posted: '2026-04-10', excerpt: 'Office hours will move to Thursday this week. Bring your draft questions.' },
-  { id: 'n2', author: 'Office of Student Life', source: 'Administration', posted: '2026-04-09', excerpt: 'Spring research showcase registration is open through Friday, April 17.' },
 ]
 export const courses: Course[] = [
   { id: 'c1', code: 'MATH 202', title: 'Calculus II', professor: 'Dr. Elena Ruiz', meeting: 'Mon & Wed · 9:00 AM · Science Hall 204', progress: 68 },

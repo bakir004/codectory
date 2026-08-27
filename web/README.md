@@ -1,32 +1,11 @@
-# React + TypeScript + Vite
+# Campus Compass web
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+## Local development
 
-Currently, two official plugins are available:
+1. Copy `.env.sample` to the repository root as `.env` and set the PostgreSQL values.
+2. Start the database only: `docker compose up -d postgres` (wait for its healthcheck).
+3. Install dependencies: `bun install` from `web/`.
+4. Apply migrations: `bun run db:migrate` from `web/`.
+5. Start the app: `bun run dev`.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
-```
-
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+Run checks with `bun run test`, `bun run lint`, and `bun run build`. Announcements are persisted in PostgreSQL and can be created, edited, and deleted from the dashboard. Authentication, authorization, production infrastructure, and a web container are out of scope.

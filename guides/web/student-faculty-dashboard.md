@@ -1,17 +1,14 @@
 # Student faculty dashboard
 
-The `/` route now provides a responsive, student-facing Campus Compass dashboard with upcoming activities, nearest-due assignments, latest scores, professor and administration announcements, and enrolled courses. All records are typed dummy data in `web/src/features/dashboard/dashboard-data.ts`; there are no APIs, authentication, persistence, or non-student views.
+The `/` route provides a responsive, student-facing Campus Compass dashboard with activities, assignments, scores, courses, and PostgreSQL-backed announcements. Announcements support create, read, update, and delete through validated accessible shadcn dialogs and confirmation controls. Database credentials are kept server-side and shared by the repository-root `.env` and the PostgreSQL-only Docker Compose service.
 
-## UI and accessibility
-
-The page uses locally owned shadcn/ui Card, Badge, Avatar, Separator, and Progress primitives, with Lucide icons as decorative supplements. Tailwind CSS v4 is integrated through the Vite plugin and configured through `components.json` and CSS variables. Semantic sections, lists, articles, labeled headings, `time[dateTime]` elements, textual source/status labels, and textual progress values support scanning and assistive technology. The layout changes from a single-column mobile flow to a three-column desktop grid without horizontal overflow. Contextual dashboard buttons offer calendar, gradebook, assignment, announcement, and course navigation affordances; they are presentational only because backend actions are out of scope. Every button uses a red background, contrasting text, and a visible keyboard focus indicator.
-
-Assignments are rendered from `sortAssignmentsByDueDate`, which returns a new stable ascending copy and preserves source order for equal timestamps.
+Assignments remain typed dummy data and are rendered from `sortAssignmentsByDueDate`, a stable ascending copy. The announcement UI includes semantic articles, source badges, timestamps, an empty state, inline validation, pending/error states, focusable labels, and red buttons with visible focus indicators.
 
 ## Verification
 
-- `bun run test` — passed (2 focused sorting tests).
-- `bun run lint` — passed with existing Fast Refresh export warnings in route files.
-- `bun run build` — passed for client and SSR production bundles.
+- `bun run test` — validation and existing sorting tests pass.
+- `bun run lint` — passed.
+- `bun run build` — passed.
+- `docker compose config --services` — emits only `postgres`.
 
-Manual browser inspection was not performed in this change.
+Manual browser inspection and live PostgreSQL repository tests were not performed in this change. Authentication/authorization, production deployment infrastructure, and a web application container remain out of scope.
