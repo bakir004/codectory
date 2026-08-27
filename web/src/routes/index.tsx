@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { getAnnouncements } from '@/features/announcements/server'
 import { Announcements } from '@/features/announcements/announcement-controls'
+import type { DashboardRole } from '@/features/announcements/permissions'
 import { CalendarDays, Clock3, MapPin, BookOpen, ClipboardList } from 'lucide-react'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
@@ -9,13 +10,20 @@ import { Progress } from '@/components/ui/progress'
 import { Separator } from '@/components/ui/separator'
 import { assignments, courses, scores, sortAssignmentsByDueDate, upcomingActivities } from '@/features/dashboard/dashboard-data'
 
-export const Route = createFileRoute('/')({ loader: () => getAnnouncements(), component: Dashboard })
+type DashboardSearch = { role: DashboardRole }
+
+export const Route = createFileRoute('/')({
+  validateSearch: (search: Record<string, unknown>): DashboardSearch => ({ role: search.role === 'faculty' ? 'faculty' : 'student' }),
+  loader: () => getAnnouncements(),
+  component: Dashboard,
+})
 const date = (value: string, options: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat('en-US', options).format(new Date(value))
 const actionButtonClass = 'rounded-md bg-red-700 px-3 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-red-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-700'
 
 function Dashboard() {
   const orderedAssignments = sortAssignmentsByDueDate(assignments)
   const announcements = Route.useLoaderData()
+  const { role } = Route.useSearch()
   return <div className="min-h-screen bg-[radial-gradient(circle_at_top_right,_#f5e6d3,_transparent_35%)]">
     <header className="mx-auto flex max-w-7xl items-center justify-between px-5 py-8 lg:px-10">
       <div><p className="text-sm font-bold uppercase tracking-[.2em] text-red-700">Campus Compass</p><h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">Good morning, Alex.</h1><p className="mt-2 text-muted-foreground">Here’s what’s happening across your semester.</p></div>
@@ -25,9 +33,9 @@ function Dashboard() {
       <section aria-labelledby="activities-heading" className="lg:col-span-2"><Card className="h-full"><CardHeader><div className="flex items-center justify-between gap-4"><div className="flex items-center gap-3"><CalendarDays className="text-red-700" aria-hidden="true" /><div><CardTitle id="activities-heading">Upcoming activities</CardTitle><CardDescription>Your next stops on campus</CardDescription></div></div><button type="button" className={actionButtonClass}>View calendar</button></div></CardHeader><CardContent><ul className="space-y-5">{upcomingActivities.map((activity, index) => <li key={activity.id} className="flex gap-4"><div className="w-14 shrink-0 text-center"><p className="text-xs font-semibold uppercase text-red-700">{date(activity.date, { month: 'short' })}</p><p className="text-2xl font-bold">{date(activity.date, { day: 'numeric' })}</p></div><div className="min-w-0 flex-1 border-l pl-4"><div className="flex flex-wrap items-center gap-2"><h3 className="font-semibold">{activity.title}</h3><Badge variant="secondary">{activity.category}</Badge></div><p className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground"><span><Clock3 className="mr-1 inline size-3.5" aria-hidden="true" /><time dateTime={activity.date}>{date(activity.date, { weekday: 'short', hour: 'numeric', minute: '2-digit' })}</time></span>{activity.location && <span><MapPin className="mr-1 inline size-3.5" aria-hidden="true" />{activity.location}</span>}</p></div>{index < upcomingActivities.length - 1 && null}</li>)}</ul></CardContent></Card></section>
       <section aria-labelledby="scores-heading"><Card className="h-full"><CardHeader><div className="flex items-center justify-between gap-4"><div className="flex items-center gap-3"><ClipboardList className="text-red-700" aria-hidden="true" /><div><CardTitle id="scores-heading">Latest scores</CardTitle><CardDescription>Recent graded work</CardDescription></div></div><button type="button" className={actionButtonClass}>View gradebook</button></div></CardHeader><CardContent><ul className="space-y-4">{scores.map((score) => <li key={score.id}><div className="flex justify-between gap-3"><div><h3 className="font-medium">{score.title}</h3><p className="text-sm text-muted-foreground">{score.course} · <time dateTime={score.graded}>{date(score.graded, { month: 'short', day: 'numeric' })}</time></p></div><strong className="text-lg text-red-700">{score.earned}/{score.possible}</strong></div></li>)}</ul></CardContent></Card></section>
       <section aria-labelledby="assignments-heading" className="lg:col-span-2"><Card><CardHeader><div className="flex items-center justify-between gap-4"><div><CardTitle id="assignments-heading">Assignments</CardTitle><CardDescription>Nearest due date first</CardDescription></div><button type="button" className={actionButtonClass}>View all</button></div></CardHeader><CardContent><ul className="space-y-1">{orderedAssignments.map((assignment, index) => <li key={assignment.id}><div className="flex flex-wrap items-center justify-between gap-3 py-3"><div><h3 className="font-semibold">{assignment.title}</h3><p className="text-sm text-muted-foreground">{assignment.course} · Due <time dateTime={assignment.due}>{date(assignment.due, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</time></p></div><Badge variant={assignment.status === 'In progress' ? 'default' : 'outline'}>{assignment.status}</Badge></div>{index < orderedAssignments.length - 1 && <Separator />}</li>)}</ul></CardContent></Card></section>
-      <section aria-labelledby="announcements-heading"><Card><Announcements announcements={announcements} /></Card></section>
+      <section aria-labelledby="announcements-heading"><Card><Announcements announcements={announcements} viewerRole={role} /></Card></section>
       <section aria-labelledby="courses-heading" className="lg:col-span-3"><Card><CardHeader><div className="flex items-center gap-3"><BookOpen className="text-red-700" aria-hidden="true" /><div><CardTitle id="courses-heading">Enrolled courses</CardTitle><CardDescription>Your spring 2026 classes</CardDescription></div></div></CardHeader><CardContent className="grid gap-4 md:grid-cols-3">{courses.map((course) => <article key={course.id} className="rounded-lg border bg-background p-4"><Badge>{course.code}</Badge><h3 className="mt-3 text-lg font-semibold">{course.title}</h3><p className="mt-1 text-sm text-muted-foreground">{course.professor}</p><p className="mt-3 text-xs text-muted-foreground">{course.meeting}</p><div className="mt-4"><div className="mb-2 flex justify-between text-xs"><span>Course progress</span><span>{course.progress}% complete</span></div><Progress value={course.progress} aria-label={`${course.title} progress: ${course.progress}%`} /></div><button type="button" className={`${actionButtonClass} mt-4 w-full`}>Open course</button></article>)}</CardContent></Card></section>
     </main>
-    <footer className="mx-auto max-w-7xl px-5 pb-8 text-xs text-muted-foreground lg:px-10">Student view · Spring 2026 · Campus Compass</footer>
+    <footer className="mx-auto max-w-7xl px-5 pb-8 text-xs text-muted-foreground lg:px-10">{role === 'faculty' ? 'Faculty' : 'Student'} view · Spring 2026 · Campus Compass</footer>
   </div>
 }

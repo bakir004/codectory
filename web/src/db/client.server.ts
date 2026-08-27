@@ -1,6 +1,19 @@
+import { existsSync } from 'node:fs'
+import { resolve } from 'node:path'
+import dotenv from 'dotenv'
 import postgres from 'postgres'
 import { drizzle } from 'drizzle-orm/postgres-js'
 import * as schema from './schema'
+
+function loadDatabaseEnvironment() {
+  // Web scripts run from web/, while Docker Compose and the shared .env live
+  // at the repository root. Preserve real process variables when deployed.
+  const candidates = [resolve(process.cwd(), '.env'), resolve(process.cwd(), '../.env')]
+  const path = candidates.find(existsSync)
+  if (path) dotenv.config({ path })
+}
+
+loadDatabaseEnvironment()
 
 function environment() {
   const required = ['POSTGRES_DB', 'POSTGRES_USER', 'POSTGRES_PASSWORD', 'POSTGRES_HOST', 'POSTGRES_PORT'] as const
