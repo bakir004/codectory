@@ -15,13 +15,13 @@ The ADW is the worker. Your job is to launch it, watch the trace, and tell the e
 Which chain to launch is decided in `how_to_prompt_for_the_eng.md`, and the short version is: **the ADW the engineer named, or else the most complete composed chain the work justifies — never a single-agent one.** Read `ls adws/adw_*.py` and the `Phases:` line in each docstring to see what this repo has; the names below are shape, not a menu.
 
 ```bash
-uv run adws/<end-to-end-chain>.py "add a /health endpoint"
-uv run adws/<plan-build-verify-chain>.py requests/health.md
-uv run adws/<build-first-chain>.py "implement the plan" --adw-id a1b2c3d4
-uv run adws/<recon-chain>.py "where is auth handled" --config path/to/other.config.yaml
+uv run adws/<end-to-end-chain>.py "add a /health endpoint" --projects api
+uv run adws/<plan-build-verify-chain>.py requests/health.md --projects api
+uv run adws/<build-first-chain>.py "implement the plan" --projects api --adw-id a1b2c3d4
+uv run adws/<recon-chain>.py "where is auth handled" --projects api --config path/to/other.config.yaml
 ```
 
-The prompt is inline text or a file path. Launch in the background so you can poll while it works; the `adw_id` is printed on startup — capture it, everything else keys off it.
+The prompt is inline text or a file path. Normally launch in the background so you can poll while it works; the `adw_id` is printed on startup — capture it, everything else keys off it. **Exception: a workflow launched with `--clarification` must stay attached to the caller harness with writable stdin for the entire `uv run`.** Do not background or detach that process.
 
 ### Declare project scope
 
@@ -30,8 +30,8 @@ This is a harness decision, not an agent guess: it selects the project guides
 that every agent must read before its task prompt is sent.
 
 ```bash
-CODECTORY_PROJECTS=web uv run adws/adw_simple_sdlc.py "change the web UI"
-CODECTORY_PROJECTS=web,api uv run adws/adw_simple_sdlc.py "add a UI action and its API"
+uv run adws/adw_simple_sdlc.py "change the web UI" --projects web
+uv run adws/adw_simple_sdlc.py "add a UI action and its API" --projects web,api
 ```
 
 An omitted or unknown project name fails before an agent starts. Declare a
@@ -71,7 +71,7 @@ They will rarely say `--config`. Treat any of these as naming a roster, then res
 `--config` takes the path directly; the justfile recipes read `CODECTORY_CONFIG` instead:
 
 ```bash
-uv run adws/<chain>.py "<prompt>" --config adws/adw_codectory_config/codectory.frontier.config.yaml
+uv run adws/<chain>.py "<prompt>" --projects web --config adws/adw_codectory_config/codectory.frontier.config.yaml
 CODECTORY_CONFIG=adws/adw_codectory_config/codectory.frontier.config.yaml just <recipe> "<prompt>"
 ```
 
@@ -81,6 +81,33 @@ Two things that bite:
 - **Switching rosters mid-session breaks resumption.** `agent_map.json` records the model each coding-agent session was created with, so a joined run (`--adw-id`) whose config now names a different model starts that agent **fresh** instead of resuming its context window. That is deliberate — a bad resume is worse — but it means "plan on the frontier roster, then build on the default" costs the builder its accumulated context. Say so when you report it.
 
 `--adw-id` is optional on **every** ADW. Given one, the run joins that session if it exists or creates it pinned to exactly that id: same `sessions/{adw_id}/` dirs, same `context_handoff/`, envelopes appended, and each agent resumes its existing coding-agent context window via `agent_map.json`. That is how you chain ADWs — plan under one id, then build under the same id.
+
+### Let the planner request clarification
+
+Use `--clarification` when the planner may return questions before committing to a plan:
+
+```bash
+uv run adws/adw_plan_build.py "<prompt>" --projects web --clarification
+```
+
+The caller harness must keep the `uv run` process attached and continuously read stdout. When Codectory emits one line beginning with `CODECTORY_CLARIFICATION_REQUIRED`, the remainder is JSON containing `adw_id`, `phase`, `round`, and `questions`. The harness must present those questions to the user, wait for their answers, then write exactly one JSON line to the workflow's stdin and flush it:
+
+```json
+{"answers":["answer to question 1", "answer to question 2"]}
+```
+
+Supply one non-empty answer per question, in order. The planner continues in the same Pi session with those answers and may ask again, up to three rounds. EOF, detached stdin, malformed JSON, or the wrong answer count fails the planner phase clearly. Without `--clarification`, planners are instructed to make explicit reasonable assumptions and cannot pause. Never launch a clarification-enabled run through a fire-and-forget shell tool: the harness must own the child process/PTY until it exits.
+
+### Continue an interrupted agent phase
+
+Continuation is explicit and distinct from joining. Pass the original workflow prompt unchanged, its existing id, and a non-empty instruction as the value of `--continue`:
+
+```bash
+uv run adws/adw_simple_sdlc.py "<original prompt>" --projects web \
+  --adw-id a1b2c3d4 --continue "Keep the partial work and fix the reported migration error"
+```
+
+The workflow restores successful agent phases from their typed envelopes and sends the instruction exactly once as a new turn to the first incomplete agent's existing Pi session. It refuses an active run or a changed workflow, original prompt, project scope, or roster. `--adw-id` without `--continue` keeps its normal join/chaining meaning. If no incomplete agent remains, the run fails rather than silently discarding the instruction.
 
 ## Observe
 

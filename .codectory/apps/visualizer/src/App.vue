@@ -13,9 +13,9 @@ const route = useRoute()
         <!-- Inline copy of public/logo.svg (the favicon) so the mark renders
              crisply with no fetch; keep the two in sync. -->
         <svg class="logo" viewBox="0 0 32 32" aria-hidden="true">
-          <rect x="4" y="6" width="17" height="5" rx="2.5" fill="#e8b64a" />
-          <rect x="8" y="13.5" width="20" height="5" rx="2.5" fill="#c89bff" />
-          <rect x="4" y="21" width="13" height="5" rx="2.5" fill="#5ad2dd" />
+          <rect x="4" y="6" width="17" height="5" rx="2.5" fill="#00bdff" />
+          <rect x="8" y="13.5" width="20" height="5" rx="2.5" fill="#79bfc5" />
+          <rect x="4" y="21" width="13" height="5" rx="2.5" fill="#d6a457" />
         </svg>
         <span class="brand">Codectory</span>
         <span class="sep">›</span>
@@ -46,7 +46,7 @@ const route = useRoute()
   align-items: center;
   justify-content: space-between;
   padding: 15px 28px;
-  background: rgba(11, 15, 24, 0.72);
+  background: rgba(36, 36, 33, 0.9);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   position: sticky;
@@ -54,7 +54,7 @@ const route = useRoute()
   z-index: 10;
 }
 
-/* Gradient hairline instead of a hard border — the brand colors, whispered. */
+/* Electric-blue hairline matching the primary accent. */
 .topbar::after {
   content: '';
   position: absolute;
@@ -62,12 +62,7 @@ const route = useRoute()
   right: 0;
   bottom: 0;
   height: 1px;
-  background: linear-gradient(
-    90deg,
-    rgba(200, 155, 255, 0.45),
-    rgba(90, 210, 221, 0.35) 40%,
-    rgba(90, 210, 221, 0.06)
-  );
+  background: linear-gradient(90deg, rgba(0, 189, 255, 0.65), rgba(0, 189, 255, 0.22) 45%, transparent);
 }
 
 .crumbs {
@@ -82,14 +77,11 @@ const route = useRoute()
   width: 28px;
   height: 28px;
   flex: none;
-  filter: drop-shadow(0 0 8px rgba(200, 155, 255, 0.35));
+  filter: drop-shadow(0 0 8px rgba(0, 189, 255, 0.28));
 }
 
 .brand {
-  background: linear-gradient(90deg, var(--purple), var(--cyan));
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  color: var(--text);
   font-weight: 700;
   letter-spacing: 0.05em;
   white-space: nowrap;

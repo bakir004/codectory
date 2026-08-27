@@ -26,15 +26,16 @@ default:
 # (`just --list` shows only the LAST comment line, so that one is the summary.)
 
 # start here: two cheap read-only runs, end to end
-demo:
+# Pass a configured project name, e.g. `just demo web`.
+demo PROJECTS:
     @echo "1/2  adw_prompt: one agent, one prompt"
-    uv run adws/adw_prompt.py --config {{config}} --agent scout "reply with a one-line summary of this repo"
+    uv run adws/adw_prompt.py --config {{config}} --agent scout "reply with a one-line summary of this repo" --projects {{PROJECTS}}
     @echo "\n2/2  adw_scout: read-only recon"
-    uv run adws/adw_scout.py --config {{config}} "list the top-level directories in this repo and what each is for. change nothing."
+    uv run adws/adw_scout.py --config {{config}} "list the top-level directories in this repo and what each is for. change nothing." --projects {{PROJECTS}}
     @echo "\nboth done. now run:  just sessions    (or: just obs)"
 
 # ── run a workflow ──────────────────────────────────────────────────────────
-# Args pass straight through: "<prompt or path/to/prompt.md>" [--adw-id X]
+# Args pass straight through: "<prompt or path/to/prompt.md>" --projects name[,name] [--adw-id X]
 
 # one agent, one prompt: just prompt "summarize this repo"
 prompt *ARGS:
@@ -52,7 +53,7 @@ plan *ARGS:
 plan-build *ARGS:
     uv run adws/adw_plan_build.py --config {{config}} "$@"
 
-# build, deterministic quality, and review: CODECTORY_PROJECTS=web just build-quality-review "change the web UI"
+# build, deterministic quality, and review: just build-quality-review "change the web UI" --projects web
 build-quality-review *ARGS:
     uv run adws/adw_build_quality_review.py --config {{config}} "$@"
 

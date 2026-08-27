@@ -54,6 +54,48 @@ let inflight = false
 let lastHandoffFetch = 0
 let timer: ReturnType<typeof setInterval> | undefined
 
+const traceLayout = ref<HTMLElement | null>(null)
+const detailWidth = ref<number | null>(null)
+let resizeStartX = 0
+let resizeStartWidth = 0
+
+function stopDetailResize() {
+  document.body.classList.remove('is-resizing-detail')
+  window.removeEventListener('pointermove', resizeDetail)
+  window.removeEventListener('pointerup', stopDetailResize)
+  window.removeEventListener('pointercancel', stopDetailResize)
+}
+
+function resizeDetail(event: PointerEvent) {
+  const layout = traceLayout.value
+  if (!layout) return
+  // Keep both the gantt and phase detail useful at their narrowest widths.
+  const maxWidth = Math.max(360, layout.clientWidth - 420)
+  detailWidth.value = Math.min(maxWidth, Math.max(360, resizeStartWidth - (event.clientX - resizeStartX)))
+}
+
+function startDetailResize(event: PointerEvent) {
+  const layout = traceLayout.value
+  if (!layout) return
+  const detail = layout.querySelector<HTMLElement>('.detail')
+  resizeStartX = event.clientX
+  resizeStartWidth = detail?.getBoundingClientRect().width ?? layout.clientWidth * 0.4
+  document.body.classList.add('is-resizing-detail')
+  window.addEventListener('pointermove', resizeDetail)
+  window.addEventListener('pointerup', stopDetailResize)
+  window.addEventListener('pointercancel', stopDetailResize)
+}
+
+function resizeDetailWithKey(event: KeyboardEvent) {
+  if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return
+  event.preventDefault()
+  const layout = traceLayout.value
+  if (!layout) return
+  const current = detailWidth.value ?? layout.querySelector<HTMLElement>('.detail')?.clientWidth ?? layout.clientWidth * 0.4
+  const maxWidth = Math.max(360, layout.clientWidth - 420)
+  detailWidth.value = Math.min(maxWidth, Math.max(360, current + (event.key === 'ArrowLeft' ? 24 : -24)))
+}
+
 const SIDE_TABLE_TYPES = new Set(['gate_pass', 'gate_fail', 'handoff', 'agent_end', 'phase_end', 'error'])
 
 async function tick() {
@@ -115,6 +157,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   clearInterval(timer)
+  stopDetailResize()
   phaseCrumb.value = null
 })
 
@@ -472,7 +515,12 @@ function selectPhase(p: Phase) {
       </span>
     </div>
 
-    <div class="trace-layout" :class="{ 'has-detail': selectedPhase }">
+    <div
+      ref="traceLayout"
+      class="trace-layout"
+      :class="{ 'has-detail': selectedPhase }"
+      :style="detailWidth ? { '--detail-width': `${detailWidth}px` } : undefined"
+    >
       <div v-if="phases.length" class="waterfall">
       <div class="row axis-row">
         <div class="label" />
@@ -576,6 +624,16 @@ function selectPhase(p: Phase) {
       <div v-else-if="loaded" class="empty-state">no phases recorded for this session</div>
       <div v-else-if="!apiError" class="empty-state">loading trace…</div>
 
+      <div
+        v-if="selectedPhase"
+        class="detail-resize-handle"
+        role="separator"
+        aria-label="Resize phase details panel"
+        aria-orientation="vertical"
+        tabindex="0"
+        @pointerdown.prevent="startDetailResize"
+        @keydown="resizeDetailWithKey"
+      />
       <PhaseDetail
         v-if="selectedPhase"
         :phase="selectedPhase"
@@ -625,14 +683,70 @@ function selectPhase(p: Phase) {
 
 .trace-layout.has-detail {
   display: grid;
-  grid-template-columns: minmax(0, 3fr) minmax(360px, 2fr);
+  /* The zero-width middle track lets the grip sit directly on the shared border. */
+  grid-template-columns: minmax(420px, 3fr) 0 minmax(360px, var(--detail-width, 2fr));
   align-items: start;
-  gap: 20px;
+  gap: 0;
+}
+
+.detail-resize-handle {
+  position: relative;
+  z-index: 1;
+  width: 20px;
+  min-height: 96px;
+  transform: translateX(-10px);
+  cursor: col-resize;
+  touch-action: none;
+}
+
+.detail-resize-handle::after {
+  content: '⋮';
+  position: sticky;
+  top: 50%;
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 44px;
+  margin: 16px auto;
+  transform: translateY(-50%);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel-2);
+  color: var(--dim);
+  font-size: 22px;
+  line-height: 1;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  transition: color 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+}
+
+.detail-resize-handle:hover::after,
+.is-resizing-detail .detail-resize-handle::after {
+  border-color: var(--blue);
+  color: var(--blue);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--blue) 60%, transparent);
+}
+
+.trace-layout.has-detail .waterfall {
+  border-right: 0;
+  border-radius: 5px 0 0 5px;
+}
+
+.trace-layout.has-detail :deep(.detail) {
+  border-radius: 0 5px 5px 0;
+}
+
+.trace-layout.has-detail :deep(.detail .d-head) {
+  border-radius: 0 4px 0 0;
+}
+
+:global(body.is-resizing-detail) {
+  cursor: col-resize;
+  user-select: none;
 }
 
 .waterfall {
   border: 1px solid var(--border-soft);
-  border-radius: 16px;
+  border-radius: 5px;
   background: var(--surface);
   overflow: hidden;
 }
@@ -641,9 +755,13 @@ function selectPhase(p: Phase) {
   margin: 0;
 }
 
-@media (max-width: 1200px) {
+@media (max-width: 900px) {
   .trace-layout.has-detail {
     grid-template-columns: 1fr;
+  }
+
+  .detail-resize-handle {
+    display: none;
   }
 }
 
@@ -764,7 +882,7 @@ function selectPhase(p: Phase) {
 .ctx-bar {
   height: 6px;
   border-radius: 999px;
-  background: rgba(6, 8, 15, 0.75);
+  background: var(--panel-3);
   border: 1px solid var(--border-soft);
   overflow: hidden;
 }
@@ -813,7 +931,7 @@ function selectPhase(p: Phase) {
   justify-content: flex-start;
   gap: 4px;
   padding: 10px 12px 16px;
-  border-radius: 10px;
+  border-radius: 4px;
   border: 1px solid;
   font-size: 16px;
   color: var(--text);

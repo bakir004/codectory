@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, reactive, ref, watch } from 'vue'
+import { computed, reactive, ref, watch, type Component } from 'vue'
 import type {
   AgentEndPayload,
   ContextHandoffResponse,
@@ -46,6 +46,16 @@ const props = defineProps<{
 
 defineEmits<{ close: [] }>()
 
+type DetailTab = 'config' | 'input' | 'events' | 'gates' | 'outputs'
+const activeTab = ref<DetailTab>('config')
+const detailTabs: { id: DetailTab; label: string; icon: Component }[] = [
+  { id: 'config', label: 'Config', icon: SlidersHorizontal },
+  { id: 'input', label: 'Input', icon: Inbox },
+  { id: 'events', label: 'Events', icon: Activity },
+  { id: 'gates', label: 'Gates', icon: ShieldCheck },
+  { id: 'outputs', label: 'Outputs', icon: Package },
+]
+
 const phaseEvents = computed(() =>
   props.events.filter((e) => e.phase_id === props.phase.phase_id).sort((a, b) => a.rowid - b.rowid),
 )
@@ -61,6 +71,22 @@ const phaseOutputs = computed(() =>
     .filter((e) => e.phase_id === props.phase.phase_id)
     .sort((a, b) => (a.attempt ?? 0) - (b.attempt ?? 0)),
 )
+
+function tabCount(tab: DetailTab): string | null {
+  if (tab === 'events') return String(phaseEvents.value.length)
+  if (tab === 'gates') {
+    const qualityChecks = qualityGroups.value.reduce((total, group) => total + group.checks.length, 0)
+    return String(phaseGates.value.length + qualityChecks)
+  }
+  if (tab === 'outputs') return String(phaseOutputs.value.length)
+  if (tab === 'input') return String(promptPanels.value.length + props.handoff.files.length)
+  return null
+}
+
+function tabCountLabel(tab: DetailTab): string | undefined {
+  if (tab === 'input') return `${promptPanels.value.length} compiled prompts and ${props.handoff.files.length} context handoffs`
+  return undefined
+}
 
 interface QualityGroup {
   project: string
@@ -410,10 +436,33 @@ function bytesLabel(bytes: number): string {
 
     <div v-if="phase.error" class="error-bar d-error">{{ phase.error }}</div>
 
+    <div class="detail-tabs" role="tablist" aria-label="Phase details">
+      <button
+        v-for="tab in detailTabs"
+        :id="`phase-tab-${tab.id}`"
+        :key="tab.id"
+        class="detail-tab"
+        :class="{ active: activeTab === tab.id }"
+        role="tab"
+        :aria-selected="activeTab === tab.id"
+        :aria-controls="`phase-panel-${tab.id}`"
+        @click="activeTab = tab.id"
+      :title="tabCountLabel(tab.id)"
+      ><component :is="tab.icon" class="detail-tab-icon" :size="15" :stroke-width="2" />{{ tab.label }}<span v-if="tabCount(tab.id) !== null" class="detail-tab-count">{{ tabCount(tab.id) }}</span></button>
+    </div>
+
     <div class="d-grid">
-      <div class="d-col">
+      <div
+        v-show="activeTab !== 'events'"
+        :id="`phase-panel-${activeTab}`"
+        class="d-col"
+        role="tabpanel"
+        :aria-labelledby="`phase-tab-${activeTab}`"
+      >
         <DetailSection
           v-if="requestText"
+          v-show="activeTab === 'config'"
+          :collapsible="false"
           title="request"
           :icon="Inbox"
           :open="openSections.has('request')"
@@ -424,6 +473,8 @@ function bytesLabel(bytes: number): string {
 
         <DetailSection
           v-if="agentConfig"
+          v-show="activeTab === 'config'"
+          :collapsible="false"
           title="agent config"
           :icon="SlidersHorizontal"
           :open="openSections.has('config')"
@@ -481,6 +532,8 @@ function bytesLabel(bytes: number): string {
 
         <DetailSection
           v-if="phase.description"
+          v-show="activeTab === 'config'"
+          :collapsible="false"
           title="description"
           :icon="AlignLeft"
           :open="openSections.has('description')"
@@ -491,6 +544,7 @@ function bytesLabel(bytes: number): string {
 
         <DetailSection
           v-if="phase.kind === 'agent'"
+          v-show="activeTab === 'input'"
           title="compiled prompts"
           :icon="MessagesSquare"
           :count="promptsState === 'ready' ? promptPanels.length : null"
@@ -528,6 +582,7 @@ function bytesLabel(bytes: number): string {
         </DetailSection>
 
         <DetailSection
+          v-show="activeTab === 'input'"
           title="context handoff"
           :icon="FolderOpen"
           :count="handoff.files.length"
@@ -572,6 +627,8 @@ function bytesLabel(bytes: number): string {
 
         <DetailSection
           v-if="qualityGroups.length"
+          v-show="activeTab === 'gates'"
+          :collapsible="false"
           title="project quality"
           :icon="SquareTerminal"
           :count="qualityGroups.reduce((n, group) => n + group.checks.length, 0)"
@@ -611,6 +668,8 @@ function bytesLabel(bytes: number): string {
         </DetailSection>
 
         <DetailSection
+          v-show="activeTab === 'gates'"
+          :collapsible="false"
           title="gates"
           :icon="ShieldCheck"
           :count="phaseGates.length"
@@ -677,6 +736,8 @@ function bytesLabel(bytes: number): string {
 
         <DetailSection
           v-if="phaseUsage"
+          v-show="activeTab === 'config'"
+          :collapsible="false"
           title="cost"
           :icon="Receipt"
           :open="openSections.has('cost')"
@@ -709,6 +770,8 @@ function bytesLabel(bytes: number): string {
         </DetailSection>
 
         <DetailSection
+          v-show="activeTab === 'outputs'"
+          :collapsible="false"
           title="outputs"
           :icon="Package"
           :count="phaseOutputs.length"
@@ -737,7 +800,13 @@ function bytesLabel(bytes: number): string {
         </DetailSection>
       </div>
 
-      <div class="d-col">
+      <div
+        v-show="activeTab === 'events'"
+        id="phase-panel-events"
+        class="d-col"
+        role="tabpanel"
+        aria-labelledby="phase-tab-events"
+      >
         <h3><Activity class="h3-icon" :size="19" :stroke-width="2" /> events ({{ phaseEvents.length }})</h3>
         <div v-if="!phaseEvents.length" class="faint">no events</div>
         <div v-for="e in phaseEvents" :key="e.event_id" class="event">
@@ -800,7 +869,7 @@ function bytesLabel(bytes: number): string {
 .detail {
   margin: 0;
   border: 1px solid var(--border-soft);
-  border-radius: 16px;
+  border-radius: 5px;
   background: var(--surface);
 }
 
@@ -812,7 +881,7 @@ function bytesLabel(bytes: number): string {
   padding: 14px 18px;
   border-bottom: 1px solid var(--border);
   background: var(--panel-2);
-  border-radius: 10px 10px 0 0;
+  border-radius: 4px 4px 0 0;
 }
 
 .d-main {
@@ -929,7 +998,7 @@ function bytesLabel(bytes: number): string {
   padding: 2px 12px;
   border: 1px solid var(--border-soft);
   border-radius: 999px;
-  background: rgba(19, 26, 38, 0.6);
+  background: var(--panel-3);
   font-family: var(--mono);
   font-size: 16px;
   overflow-wrap: anywhere;
@@ -944,10 +1013,59 @@ function bytesLabel(bytes: number): string {
   margin: 14px 18px 0;
 }
 
+.detail-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 12px 18px 0;
+  border-bottom: 1px solid var(--border-soft);
+  overflow-x: auto;
+}
+
+.detail-tab {
+  flex: none;
+  padding: 8px 12px 9px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--dim);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.detail-tab-icon {
+  margin-right: 6px;
+  vertical-align: -2px;
+}
+
+.detail-tab-count {
+  margin-left: 6px;
+  color: var(--faint);
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.detail-tab.active .detail-tab-count {
+  color: var(--dim);
+}
+
+.detail-tab:hover,
+.detail-tab:focus-visible {
+  color: var(--text);
+  outline: none;
+}
+
+.detail-tab.active {
+  border-bottom-color: var(--blue);
+  color: var(--text);
+}
+
 .d-grid {
+  grid-template-columns: minmax(0, 1fr);
   display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
-  gap: 28px;
+  gap: 0;
   padding: 16px 18px 20px;
 }
 
@@ -1469,7 +1587,7 @@ h3:first-child {
   border: 1px solid var(--border-soft);
   border-radius: 8px;
   padding: 10px 12px;
-  background: rgba(6, 8, 15, 0.55);
+  background: color-mix(in srgb, var(--panel-3) 75%, transparent);
   max-height: 42vh;
   overflow: auto;
 }

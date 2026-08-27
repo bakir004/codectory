@@ -116,6 +116,6 @@ if __name__ == "__main__":
 
 ## Before you ship it
 
-1. `uv run adws/adw_<name>.py "a tiny real request"` — watch it go green end to end.
+1. `uv run adws/adw_<name>.py "a tiny real request" --projects <project>` — watch it go green end to end.
 2. Check the trace: `sqlite3 adws/adw_data/codectory.db "select seq,name,kind,owner,status from phases where adw_id='<id>' order by seq;"`
 3. Read the final `envelope.json` — is the output type earning its fields, or should it be sharper?

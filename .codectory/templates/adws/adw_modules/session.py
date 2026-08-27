@@ -12,7 +12,7 @@ import signal
 import sys
 from pathlib import Path
 
-from .data_types import CODECTORYConfig
+from .data_types import CODECTORYConfig, LaunchOptions
 from .runner import Run
 from .tracer import Tracer
 from .utils import engineer_name, new_id
@@ -35,11 +35,20 @@ def _finalize_when_killed(run: Run) -> None:
         signal.signal(sig, handler)
 
 
-def ensure(cfg: CODECTORYConfig, adw_id: str | None = None) -> Run:
-    adw_id = adw_id or new_id(8)
+def ensure(cfg: CODECTORYConfig, options: LaunchOptions) -> Run:
+    adw_id = options.adw_id or new_id(8)
     tracer = Tracer(cfg.observability.db,
                     f"{cfg.defaults.data_dir}/sessions/{adw_id}/events.jsonl")
-    run = Run(cfg=cfg, adw_id=adw_id, tracer=tracer, engineer=engineer_name())
+    if options.continue_instruction is not None:
+        for pid, command in tracer.live_processes(adw_id):
+            try:
+                os.kill(pid, 0)
+            except (ProcessLookupError, PermissionError):
+                continue
+            raise RuntimeError(
+                f"cannot continue {adw_id}: workflow process {pid} is still active ({command})")
+        tracer.processes_end_all(adw_id)
+    run = Run(cfg=cfg, adw_id=adw_id, tracer=tracer, engineer=engineer_name(), options=options)
     tracer.session_start(adw_id, run.engineer, adw_name=Path(sys.argv[0]).stem)
     # This process is the run. Record it before any phase opens, so a run that
     # hangs in its first agent call is still killable by adw_id.

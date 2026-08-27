@@ -217,6 +217,22 @@ class Tracer:
                                 (adw_id,)).fetchone()
         return row[0] if row and row[0] is not None else 0
 
+    def phase_get(self, adw_id: str, seq: int):
+        return self.conn.execute(
+            "SELECT phase_id,name,kind,owner,description,status,attempt,retries,error,started_at,ended_at "
+            "FROM phases WHERE adw_id=? AND seq=?", (adw_id, seq)).fetchone()
+
+    def latest_valid_envelope(self, phase_id: str, output_type: str):
+        row = self.conn.execute(
+            "SELECT payload_json FROM envelopes WHERE phase_id=? AND output_type=? AND valid=1 "
+            "ORDER BY created_at DESC LIMIT 1", (phase_id, output_type)).fetchone()
+        return row[0] if row else None
+
+    def live_processes(self, adw_id: str):
+        return self.conn.execute(
+            "SELECT pid,command FROM processes WHERE adw_id=? AND ended_at IS NULL",
+            (adw_id,)).fetchall()
+
     def phase_upsert(self, phase: Phase) -> None:
         p = phase.params
         self.conn.execute(

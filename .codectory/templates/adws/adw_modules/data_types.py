@@ -21,6 +21,27 @@ PhaseStatus = Literal["queued", "running", "success", "fail"]
 
 # ── Phases ────────────────────────────────────────────────────────────────────
 
+class LaunchOptions(BaseModel):
+    """Session launch inputs, including strict opt-in continuation."""
+
+    prompt: str
+    projects: str
+    config_path: str
+    adw_id: Optional[str] = None
+    continue_instruction: Optional[str] = None
+    clarification: bool = False
+
+    @model_validator(mode="after")
+    def _continue_requires_id_and_instruction(self):
+        if self.continue_instruction is not None:
+            self.continue_instruction = self.continue_instruction.strip()
+            if not self.continue_instruction:
+                raise ValueError("--continue requires a non-empty instruction")
+            if not self.adw_id:
+                raise ValueError("--continue requires --adw-id")
+        return self
+
+
 class PhaseParams(BaseModel):
     """Everything run.phase() needs. Passed as one object, never loose params."""
 
@@ -85,6 +106,10 @@ class GenericOutput(EnvelopeBase):
 
 
 class PlanOutput(EnvelopeBase):
+    # Non-empty only when --clarification is enabled and planning cannot safely
+    # proceed without engineer input. No plan artifacts are required until the
+    # questions have been answered and the planner emits its final report.
+    clarification_questions: list[str] = Field(default_factory=list)
     # Subject for committing the PLAN — the spec file the planner wrote, not the
     # implementation it describes. Each agent's commit_message covers its own
     # work product, so a chain that commits per step never reuses one agent's

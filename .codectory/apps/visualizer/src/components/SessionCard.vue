@@ -261,7 +261,7 @@ const hiddenRowCount = computed(() =>
   padding: 20px 22px;
   position: relative;          /* anchors the archive button */
   border: 1px solid var(--border-soft);
-  border-radius: 16px;
+  border-radius: 5px;
   background: var(--surface);
   color: var(--text);
   cursor: pointer;
@@ -281,7 +281,7 @@ const hiddenRowCount = computed(() =>
   height: 26px;
   padding: 0;
   border: 0;
-  border-radius: 8px;
+  border-radius: 3px;
   background: transparent;
   color: var(--dim);
   font-family: inherit;

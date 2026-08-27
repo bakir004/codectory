@@ -95,6 +95,14 @@ class Console:
         """Free-form detail inside the current phase — what `ph.log()` recorded."""
         self._emit(f"  [dim]· {escape(_clip(message))}[/dim]")
 
+    def clarification_required(self, payload: str) -> None:
+        """Machine-readable handoff for an attached caller controlling stdin."""
+        self._emit(f"[bold yellow]CODECTORY_CLARIFICATION_REQUIRED[/bold yellow] {escape(payload)}",
+                   level="warn")
+
+    def clarification_received(self, count: int) -> None:
+        self._emit(f"  [green]↳[/green] clarification received [dim]({count} answer(s))[/dim]")
+
     # ── agents ──────────────────────────────────────────────────────────────
     def agent_started(self, name: str, model: str, session_id: str) -> None:
         self._emit(f"  [magenta]▸[/magenta] {escape(name)} [dim]{escape(model)}[/dim]"

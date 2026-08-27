@@ -10,6 +10,7 @@ disposes.
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
 from typing import Optional
 
@@ -17,11 +18,12 @@ import yaml
 
 from . import agent_pi, permissions, prompts
 from .data_types import (AgentCall, AgentConfig, EnvelopeBase, EventRecord,
-                         GateCheck, GateReport, Phase, PiRequest, CODECTORYConfig,
-                         UsageBreakdown)
+                         GateCheck, GateReport, Phase, PiRequest, PlanOutput,
+                         CODECTORYConfig, UsageBreakdown)
 from .utils import new_id
 
 JSON_FIX_ATTEMPTS = 2      # continue-with-correction attempts for malformed JSON
+MAX_CLARIFICATION_ROUNDS = 3
 
 
 class GateFailure(RuntimeError):
@@ -119,10 +121,23 @@ def execute(run, phase: Phase, call: AgentCall) -> EnvelopeBase:
     # Project guides are factory context: every agent sees the same validated
     # packet, regardless of which ADW happened to call it.
     user_text = f"{user_text.rstrip()}\n\n{run.project_guides}"
+    if call.output_type is PlanOutput:
+        clarification_rule = (
+            "Clarification mode is ENABLED. If material ambiguity prevents a safe plan, "
+            "do not write plan artifacts yet: return PlanOutput with a non-empty "
+            "clarification_questions list. Otherwise return an empty list and the final plan."
+            if run.clarification else
+            "Clarification mode is DISABLED. clarification_questions must be empty; make "
+            "reasonable explicit assumptions and produce the final plan without asking questions.")
+        user_text = f"{user_text.rstrip()}\n\n## Clarification mode\n\n{clarification_rule}"
     prompts.save(agent_dir / "prompts", "system.md", system_text)
     prompts.save(agent_dir / "prompts", "user.md", user_text)
 
     session_id = _agent_session_id(run, agent)
+    # Persist before spawning so an interrupted phase can continue the same
+    # coding-agent context rather than minting a replacement session.
+    run.save_agent_map(agent.name, {"session_id": session_id, "model": agent.model,
+                                    "coding_agent": agent.coding_agent})
     run.tracer.event(EventRecord(adw_id=run.adw_id, phase_id=phase.phase_id,
                                  type="agent_start", name=agent.name,
                                  payload={"model": agent.model, "thinking": agent.thinking,
@@ -185,8 +200,66 @@ def execute(run, phase: Phase, call: AgentCall) -> EnvelopeBase:
             raise GateFailure("agent did not read required project guides at phase start:\n- "
                                + "\n- ".join(missing))
 
+    continue_instruction = run.take_continue_instruction(phase)
+    if continue_instruction is not None:
+        user_text = (
+            "## Continue the interrupted phase\n\n"
+            "Keep the original task and all existing session context. Continue from the "
+            "partial work already present, following this new engineer instruction:\n\n"
+            f"{continue_instruction}\n\n"
+            "When finished, emit the phase's required Report JSON.")
     result = send(user_text)
     envelope, attempt = _parse_with_retries(run, phase, call, result, send)
+
+    if isinstance(envelope, PlanOutput) and envelope.clarification_questions:
+        if not run.clarification:
+            raise RuntimeError("planner returned clarification questions without --clarification")
+        for round_number in range(1, MAX_CLARIFICATION_ROUNDS + 1):
+            questions = envelope.clarification_questions
+            payload = json.dumps({"adw_id": run.adw_id, "phase": phase.params.name,
+                                  "round": round_number, "questions": questions})
+            run.tracer.event(EventRecord(
+                adw_id=run.adw_id, phase_id=phase.phase_id,
+                type="clarification_required", name=agent.name,
+                payload={"round": round_number, "questions": questions}))
+            run.console.clarification_required(payload)
+            line = sys.stdin.readline()
+            if not line:
+                raise RuntimeError(
+                    "clarification requested but the caller detached or closed stdin; "
+                    "rerun from an attached harness")
+            text = line.strip()
+            try:
+                decoded = json.loads(text)
+                answers = decoded.get("answers") if isinstance(decoded, dict) else decoded
+                if isinstance(answers, str):
+                    answers = [answers]
+                if (not isinstance(answers, list) or len(answers) != len(questions)
+                        or not all(isinstance(a, str) and a.strip() for a in answers)):
+                    raise ValueError("answers must contain one non-empty string per question")
+            except (json.JSONDecodeError, ValueError) as error:
+                raise RuntimeError(
+                    'clarification input must be one JSON line: {"answers":["..."]}') from error
+            run.tracer.event(EventRecord(
+                adw_id=run.adw_id, phase_id=phase.phase_id,
+                type="clarification_received", name=agent.name,
+                payload={"round": round_number, "answer_count": len(answers)}))
+            run.console.clarification_received(len(answers))
+            paired = "\n".join(
+                f"Q{i}: {question}\nA{i}: {answers[i - 1]}"
+                for i, question in enumerate(questions, 1))
+            result = send(
+                "The engineer answered your clarification questions below. Continue planning "
+                "in this same session. If a material ambiguity still remains, return another "
+                "non-empty clarification_questions list and do not write plan artifacts. "
+                "Otherwise write the final plan artifacts and return clarification_questions=[] "
+                "in the required PlanOutput JSON.\n\n" + paired)
+            envelope, attempt = _parse_with_retries(run, phase, call, result, send)
+            if not envelope.clarification_questions:
+                break
+        else:
+            raise RuntimeError(
+                f"planner still required clarification after {MAX_CLARIFICATION_ROUNDS} rounds")
 
     # Project guides are enforced at the common agent-call boundary, so every
     # ADW receives the same proof requirement without adding workflow phases.

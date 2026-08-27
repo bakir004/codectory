@@ -42,8 +42,8 @@ Re-running is safe. `install.py` skips **every** file that already exists — yo
 6. **Smoke test** — `just demo` runs two cheap read-only workflows back to back, or run the smallest ADW directly:
 
 ```bash
-just demo                                                    # both, end to end
-uv run adws/adw_prompt.py "reply with a one-line summary of this repo"   # the raw form
+just demo web                                                # both, end to end
+uv run adws/adw_prompt.py "reply with a one-line summary of this repo" --projects web   # the raw form
 ```
 
 Green means the whole path works: config validated, session minted, Pi ran, envelope parsed, events landed in `adws/adw_data/codectory.db`. Verify the trace exists before trusting anything larger:

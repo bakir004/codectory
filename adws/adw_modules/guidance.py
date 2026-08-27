@@ -21,7 +21,7 @@ def load(run) -> str:
     unknown = sorted(set(run.project_scope) - configured.keys())
     if unknown:
         raise RuntimeError(
-            f"CODECTORY_PROJECTS names unknown project(s): {', '.join(unknown)}; "
+            f"--projects names unknown project(s): {', '.join(unknown)}; "
             f"configured: {', '.join(sorted(configured))}")
     projects = [configured[name] for name in run.project_scope]
     paths: list[str] = []

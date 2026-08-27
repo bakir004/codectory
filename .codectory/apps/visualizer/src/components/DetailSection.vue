@@ -8,6 +8,8 @@ defineProps<{
   /** Shown after the title; omit for sections without a natural count. */
   count?: number | null
   open: boolean
+  /** Non-collapsible sections always display their full contents. */
+  collapsible?: boolean
 }>()
 
 defineEmits<{ toggle: [] }>()
@@ -15,13 +17,18 @@ defineEmits<{ toggle: [] }>()
 
 <template>
   <section class="dsec">
-    <button class="dsec-head" @click="$emit('toggle')">
+    <button v-if="collapsible !== false" class="dsec-head" @click="$emit('toggle')">
       <span class="chev">{{ open ? '▾' : '▸' }}</span>
       <component :is="icon" v-if="icon" class="dsec-icon" :size="19" :stroke-width="2" />
       <span class="dsec-title">{{ title }}</span>
       <span v-if="count != null" class="dsec-count dim">({{ count }})</span>
     </button>
-    <div v-if="open" class="dsec-body">
+    <div v-else class="dsec-head dsec-head-static">
+      <component :is="icon" v-if="icon" class="dsec-icon" :size="19" :stroke-width="2" />
+      <span class="dsec-title">{{ title }}</span>
+      <span v-if="count != null" class="dsec-count dim">({{ count }})</span>
+    </div>
+    <div v-if="collapsible === false || open" class="dsec-body">
       <slot />
     </div>
   </section>
@@ -59,6 +66,15 @@ defineEmits<{ toggle: [] }>()
 .dsec-head:hover {
   background: var(--panel-2);
   color: var(--text);
+}
+
+.dsec-head-static {
+  cursor: default;
+}
+
+.dsec-head-static:hover {
+  background: none;
+  color: var(--dim);
 }
 
 .chev {

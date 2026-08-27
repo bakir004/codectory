@@ -18,6 +18,8 @@
 
 Plan the work described in `prompt`.
 
+When the harness says clarification mode is enabled and material ambiguity prevents a safe plan, return the Report JSON immediately with your questions in `clarification_questions`, empty `artifacts`, and no plan files written. The harness will collect answers and continue this same session. Once sufficiently clear—or whenever clarification mode is disabled—set `clarification_questions` to `[]` and complete the steps below.
+
 1. Write the full plan to `<context_handoff_dir>/plan.md` — this is the copy the builder reads.
 2. Copy that file into the repo under `specs/`:
    - **List `specs/` before you pick the name.** A session that plans more than once reuses its `<adw_id>`, so the obvious name may already be taken.
@@ -41,6 +43,7 @@ Respond with ONLY valid JSON matching `PlanOutput` — no prose before or after:
   "commit_message": "<imperative one-line git subject for committing THIS PLAN DOCUMENT, not the work it describes — e.g. 'Add spec for the /health endpoint'>",
   "research_required": false,
   "research_topics": [],
+  "clarification_questions": [],
   "notes_for_next_agent": "<what the builder must know>"
 }
 ```
