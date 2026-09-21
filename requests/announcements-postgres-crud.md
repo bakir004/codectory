@@ -1,4 +1,0 @@
-Add PostgreSQL-backed announcements CRUD to the web project, with a polished frontend create button that opens a shadcn dialog for entering an announcement and saves it to the database; add a repository-root Docker Compose file that starts only PostgreSQL and a repository-root .env whose database credentials are consumed by the web project.
-Where: web/ (the configured web project), repository root (Docker Compose and .env), using the existing shadcn setup declared by web/components.json.
-Done means: users can create, read, update, and delete persisted announcements through the web UI; the create dialog validates and saves to PostgreSQL; configured web lint and build checks pass; Docker Compose starts only the database with shared credentials from the root .env.
-Out of scope: authentication/authorization, production deployment infrastructure, and containers for the web application.
