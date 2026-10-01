@@ -44,12 +44,23 @@ unknown todo IDs are rejected with a 4xx response.
 ## Commands
 
 Run both applications with `bun run dev`, or use `bun run dev:frontend` and
-`bun run dev:api` separately. The required checks are:
+`bun run dev:api` separately. The required deterministic quality checks are:
 
 ```sh
+bun run format:check
 bun run lint
+bun run typecheck
 bun run test
 bun run build
+```
+
+`bun run format` writes Biome formatting changes; `format:check` verifies
+formatting without modifying files. These five non-mutating checks cover both
+applications where applicable. Production output is created by `bun run build`.
+
+Database migrations can be run with:
+
+```sh
 bun run migration:run
 bun run migration:revert
 ```

@@ -1,2 +1,13 @@
-import { MigrationInterface, QueryRunner } from 'typeorm'
-export class CreateTodos1710000000000 implements MigrationInterface { name = 'CreateTodos1710000000000'; async up(q: QueryRunner) { await q.query('CREATE EXTENSION IF NOT EXISTS "uuid-ossp"'); await q.query(`CREATE TABLE "todos" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "title" character varying(200) NOT NULL, "completed" boolean NOT NULL DEFAULT false, "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "updatedAt" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "PK_todos_id" PRIMARY KEY ("id"))`) }; async down(q: QueryRunner) { await q.query('DROP TABLE "todos"') } }
+import type { MigrationInterface, QueryRunner } from 'typeorm';
+export class CreateTodos1710000000000 implements MigrationInterface {
+  name = 'CreateTodos1710000000000';
+  async up(q: QueryRunner) {
+    await q.query('CREATE EXTENSION IF NOT EXISTS "uuid-ossp"');
+    await q.query(
+      `CREATE TABLE "todos" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "title" character varying(200) NOT NULL, "completed" boolean NOT NULL DEFAULT false, "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "updatedAt" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "PK_todos_id" PRIMARY KEY ("id"))`,
+    );
+  }
+  async down(q: QueryRunner) {
+    await q.query('DROP TABLE "todos"');
+  }
+}

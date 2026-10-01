@@ -15,13 +15,28 @@ projects:
     path: web
     guides: guides/web
     checks:
+      - name: format
+        area: fullstack
+        operation: format
+        command: [bun, run, format:check]
+        timeout_seconds: 120
       - name: lint
-        area: frontend
+        area: fullstack
         operation: lint
         command: [bun, run, lint]
         timeout_seconds: 120
+      - name: typecheck
+        area: fullstack
+        operation: typecheck
+        command: [bun, run, typecheck]
+        timeout_seconds: 120
+      - name: test
+        area: fullstack
+        operation: test
+        command: [bun, run, test]
+        timeout_seconds: 300
       - name: build
-        area: frontend
+        area: fullstack
         operation: build
         command: [bun, run, build]
         timeout_seconds: 300

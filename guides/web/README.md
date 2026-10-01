@@ -1,3 +1,6 @@
-# Web project guide
+# Web project guides
 
-Placeholder guide for the web project. Follow the engineer's request and the repository's existing conventions. Add project-specific architecture, styling, testing, and documentation guidance here as the application evolves.
+These guides apply to the web project. Follow the applicable frontend and API guidance, along with the engineer's request.
+
+- [Frontend](frontend.md): frontend architecture, code style, documentation, and testing.
+- [API](api.md): NestJS/API architecture, code style, documentation, and testing.

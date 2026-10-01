@@ -1,1 +1,32 @@
-{"name":"@todo/api","private":true,"type":"module","scripts":{"dev":"bun --watch src/main.ts","build":"tsc -p tsconfig.build.json","lint":"tsc --noEmit -p tsconfig.json","test":"vitest run","migration:run":"bun run build && typeorm migration:run -d dist/src/data-source.js","migration:revert":"bun run build && typeorm migration:revert -d dist/src/data-source.js"},"dependencies":{"@nestjs/common":"latest","@nestjs/config":"latest","@nestjs/core":"latest","@nestjs/typeorm":"latest","class-transformer":"latest","class-validator":"latest","pg":"latest","reflect-metadata":"latest","rxjs":"latest","typeorm":"latest"},"devDependencies":{"@nestjs/testing":"latest","@types/node":"latest","typescript":"latest","vitest":"latest"}}
+{
+  "name": "@todo/api",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun --watch src/main.ts",
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run",
+    "migration:run": "bun run build && typeorm migration:run -d dist/src/data-source.js",
+    "migration:revert": "bun run build && typeorm migration:revert -d dist/src/data-source.js"
+  },
+  "dependencies": {
+    "@nestjs/common": "latest",
+    "@nestjs/config": "latest",
+    "@nestjs/core": "latest",
+    "@nestjs/platform-express": "^12.1.2",
+    "@nestjs/typeorm": "latest",
+    "class-transformer": "latest",
+    "class-validator": "latest",
+    "pg": "latest",
+    "reflect-metadata": "latest",
+    "rxjs": "latest",
+    "typeorm": "latest"
+  },
+  "devDependencies": {
+    "@nestjs/testing": "latest",
+    "@types/node": "latest",
+    "typescript": "latest",
+    "vitest": "latest"
+  }
+}

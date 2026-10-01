@@ -1,0 +1,4 @@
+Add proper Bun-based Biome formatting, linting, TypeScript typechecking, testing, and production building for the web application.
+Where: `web/` and its project tooling/configuration; use the existing web project guide and configure the repository's deterministic quality checks to reflect these commands.
+Done means: the web project has clear Bun scripts and Biome configuration for format/lint, a typecheck command, a test command, and a production build command; each required check runs successfully from the documented commands.
+Out of scope: changing todo-app product behavior, adding deployment services, and introducing a second formatter or linter.
