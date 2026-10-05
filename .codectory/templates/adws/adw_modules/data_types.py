@@ -223,7 +223,7 @@ class ProjectConfig(BaseModel):
 
     name: str
     path: str = Field(default=".", validation_alias=AliasChoices("path", "relative_path"))
-    guides: str = Field(default="guides", validation_alias=AliasChoices("guides", "guides_path"))
+    guides: str | None = Field(default=None, validation_alias=AliasChoices("guides", "guides_path"))
     checks: list[ProjectCheckConfig] = Field(min_length=1)
 
     @field_validator("name")
@@ -234,10 +234,15 @@ class ProjectConfig(BaseModel):
             raise ValueError("must be a safe non-empty label without path separators")
         return value
 
-    @field_validator("path", "guides")
+    @field_validator("path")
     @classmethod
     def _safe_relative_path(cls, value: str) -> str:
         return _relative_repo_path(value)
+
+    @field_validator("guides")
+    @classmethod
+    def _safe_optional_guides_path(cls, value: str | None) -> str | None:
+        return _relative_repo_path(value) if value is not None else None
 
     @model_validator(mode="after")
     def _unique_check_names(self) -> "ProjectConfig":

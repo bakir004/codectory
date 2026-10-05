@@ -1,9 +1,9 @@
-"""Project guide loading and prompt injection for every CODECTORY agent call.
+"""Optional project-guide loading and prompt injection for CODECTORY agent calls.
 
-Guides are repository-owned Markdown instructions for how work is done. They
-are loaded once per Run, written into the shared handoff directory, and added
-to every agent prompt by agents.execute(). The engineer's request always wins
-when it conflicts with a guide.
+Projects may opt into repository-owned Markdown instructions with a ``guides``
+path in ``projects.yaml``. Configured guides are loaded once per Run, written
+into the shared handoff directory, and added to every agent prompt. Projects
+without ``guides`` run normally without guide injection.
 """
 
 from __future__ import annotations
@@ -14,7 +14,7 @@ from . import quality
 
 
 def load(run) -> str:
-    """Validate every configured guide set and return its immutable prompt packet."""
+    """Validate configured guide sets and return their immutable prompt packet."""
     config = quality.load_projects(run)
     root = Path(run.repo_root).resolve()
     configured = {project.name: project for project in config.projects}
@@ -25,25 +25,16 @@ def load(run) -> str:
             f"configured: {', '.join(sorted(configured))}")
     projects = [configured[name] for name in run.project_scope]
     paths: list[str] = []
-    sections: list[str] = [
-        "## Project guides (factory-provided)",
-        "These Markdown guides define the repository's architecture, style, testing, "
-        "and documentation rules. Follow every applicable rule. If a guide conflicts "
-        "with the engineer's request, the engineer's request wins; state that override "
-        "explicitly in your report rather than silently ignoring the guide.",
-    ]
+    sections: list[str] = []
 
     for project in projects:
+        if project.guides is None:
+            continue
         guide_dir = (root / project.guides).resolve()
         if not guide_dir.is_dir():
             raise RuntimeError(
-                f"project {project.name!r} guide directory is required but missing: "
+                f"project {project.name!r} configured guide directory is missing: "
                 f"{project.guides}")
-        index = guide_dir / "README.md"
-        if not index.is_file():
-            raise RuntimeError(
-                f"project {project.name!r} guides require an index: "
-                f"{index.relative_to(root)}")
         files = sorted(path for path in guide_dir.rglob("*.md") if path.is_file())
         if not files:
             raise RuntimeError(f"project {project.name!r} has no Markdown guides: {project.guides}")
@@ -60,7 +51,16 @@ def load(run) -> str:
             sections.append(f"\n#### {relative}\n\n{resolved.read_text()}")
 
     run.project_guide_paths = frozenset(paths)
-    run.project_guides_scope = tuple(project.name for project in projects)
-    packet = "\n".join(sections).rstrip() + "\n"
+    run.project_guides_scope = tuple(project.name for project in projects if project.guides is not None)
+    if not sections:
+        return ""
+
+    header = [
+        "## Project guides (factory-provided)",
+        "These optional Markdown guides define repository conventions. Follow every "
+        "applicable rule. If a guide conflicts with the engineer's request, the request "
+        "wins; state that override explicitly in your report.",
+    ]
+    packet = "\n".join([*header, *sections]).rstrip() + "\n"
     (run.context_handoff_dir / "project_guides.md").write_text(packet)
     return packet

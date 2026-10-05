@@ -1,8 +1,9 @@
 # Configure deterministic project quality
 
-CODECTORY reads every deterministic quality command from `projects.yaml` at the
-repository root. The installer creates a starter file; `adw_modules/quality.py`
-contains no repository-specific command.
+CODECTORY reads every deterministic quality command from `projects.yaml` beside
+the selected Codectory config in `adws/adw_codectory_config/`. The installer
+creates a starter file there; `adw_modules/quality.py` contains no
+repository-specific command.
 
 ## Schema
 
@@ -10,7 +11,7 @@ contains no repository-specific command.
 projects:
   web:
     path: apps/web             # relative to repository root
-    guides: guides             # relative to repository root
+    guides: guides             # optional; relative to repository root
     checks:
       - name: lint
         area: frontend         # descriptive grouping shown in traces
@@ -40,20 +41,20 @@ projects:
 `command` must be a YAML array of argv strings, not a shell command. Commands
 inherit the operator environment and run with the configured project `path` as
 their working directory. Use bare executable names so the same PATH selection
-an engineer uses is preserved. Project and guide paths must stay inside the
-repository; project and check names must be unique and safe as artifact path
-segments. Invalid configuration fails before any command starts and reports the
-field that is malformed.
+an engineer uses is preserved. Project paths and any configured guide paths
+must stay inside the repository; project and check names must be unique and safe
+as artifact path segments. Invalid configuration fails before any command starts
+and reports the field that is malformed.
 
-## Project guides
+## Optional project guides
 
-`guides` is not optional operational metadata: it is the directory of Markdown
-rules the factory injects into **every agent call**. It must exist and contain a
-`README.md` index; all Markdown files beneath it are written into the run's
-`context_handoff/project_guides.md` and appended to every agent prompt. Put
-architecture, code style, testing, and documentation rules there. The
-engineer's explicit request wins over a conflicting guide; agents must name the
-override in their report rather than silently ignoring the rule.
+`guides` is optional. When present, it names a directory of Markdown rules that
+the factory injects into every agent call for that project. All Markdown files
+beneath it are written into the run's `context_handoff/project_guides.md` and
+appended to every agent prompt. When omitted, the project runs normally without
+guide injection. A configured guide directory must exist and contain at least
+one Markdown file. The engineer's explicit request wins over a conflicting
+guide; agents must name the override in their report.
 
 ## Changed projects and scope
 

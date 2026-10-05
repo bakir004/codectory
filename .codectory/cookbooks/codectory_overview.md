@@ -11,10 +11,10 @@ Your job as orchestrator: **run the system, observe the system, help the enginee
 ## Layout of a stamped repo
 
 ```
-projects.yaml                       project paths + deterministic quality commands
 adws/
 ├── adw_codectory_config/
-│   └── codectory.config.yaml         the agent roster — one agent, one prompt, one purpose
+│   ├── codectory.config.yaml         the agent roster — one agent, one prompt, one purpose
+│   └── projects.yaml                 project paths + deterministic quality commands
 ├── adw_prompt.py                smallest ADW: one agent, one prompt, traced end-to-end
 ├── adw_plan.py, adw_scout.py, adw_build.py, adw_plan_build.py, adw_build_test.py, adw_plan_build_test.py
 ├── adw_build_review.py          build → review: is this what was asked for? (not testing)

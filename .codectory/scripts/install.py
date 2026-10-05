@@ -9,7 +9,7 @@ Usage:
 
 Stamps: adws/ (modules + starter ADWs), adws/adw_data/prompt_engineering/,
 adws/adw_data/harness_engineering/, adws/adw_codectory_config/codectory.config.yaml,
-projects.yaml, .env.sample, and .gitignore entries.
+the project configuration, .env.sample, and .gitignore entries.
 Existing files are skipped unless --force.
 """
 
@@ -77,9 +77,9 @@ def main() -> int:
     stamp(TEMPLATES / "agents.yaml",
           root / "adws" / "adw_codectory_config" / "agents.yaml",
           args.force, stamped, skipped)
-    stamp(TEMPLATES / "projects.yaml", root / "projects.yaml",
+    stamp(TEMPLATES / "projects.yaml",
+          root / "adws" / "adw_codectory_config" / "projects.yaml",
           args.force, stamped, skipped)
-    stamp(TEMPLATES / "guides", root / "guides", args.force, stamped, skipped)
     stamp(TEMPLATES / "env.sample", root / ".env.sample", args.force, stamped, skipped)
     # The recipes are part of the operating experience, and several cookbooks
     # plus the run banner tell you to use them, so a stamped repo has to have

@@ -22,6 +22,7 @@ Run from the **target repo root** — the cwd is where everything lands. If the 
 | `adws/adw_modules/` | `templates/adws/adw_modules/` | yes — all low-level logic |
 | `adws/adw_data/prompt_engineering/{planner,builder,scout,reviewer,documenter}/` | `templates/prompt_engineering/` | yes — **the user-owned home for prompts** |
 | `adws/adw_data/harness_engineering/` | `templates/harness_engineering/` | yes — **the user-owned home for pi extensions** |
+| `adws/adw_codectory_config/projects.yaml` | `templates/projects.yaml` | yes — project checks and optional guide paths |
 | `justfile` | `templates/justfile` | yes — starter recipes: `just demo`, the workflows, the trace reads, `just obs` |
 | `adws/adw_data/sessions/`, `adws/adw_data/codectory.db` | created at runtime | no — gitignored |
 
@@ -42,8 +43,8 @@ Re-running is safe. `install.py` skips **every** file that already exists — yo
 6. **Smoke test** — `just demo` runs two cheap read-only workflows back to back, or run the smallest ADW directly:
 
 ```bash
-just demo web                                                # both, end to end
-uv run adws/adw_prompt.py "reply with a one-line summary of this repo" --projects web   # the raw form
+just demo adws                                                # both, end to end
+uv run adws/adw_prompt.py "reply with a one-line summary of this repo" --projects adws   # the raw form
 ```
 
 Green means the whole path works: config validated, session minted, Pi ran, envelope parsed, events landed in `adws/adw_data/codectory.db`. Verify the trace exists before trusting anything larger:

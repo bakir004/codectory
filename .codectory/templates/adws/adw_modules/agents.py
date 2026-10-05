@@ -118,9 +118,10 @@ def execute(run, phase: Phase, call: AgentCall) -> EnvelopeBase:
     }
     system_text = prompts.render(agent.prompt_engineering.system, variables)
     user_text = prompts.render(agent.prompt_engineering.user, variables)
-    # Project guides are factory context: every agent sees the same validated
-    # packet, regardless of which ADW happened to call it.
-    user_text = f"{user_text.rstrip()}\n\n{run.project_guides}"
+    # Configured project guides are shared factory context. Projects may omit
+    # them, in which case the prompt is left unchanged.
+    if run.project_guides:
+        user_text = f"{user_text.rstrip()}\n\n{run.project_guides}"
     if call.output_type is PlanOutput:
         clarification_rule = (
             "Clarification mode is ENABLED. If material ambiguity prevents a safe plan, "

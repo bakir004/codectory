@@ -1,10 +1,10 @@
 # Deterministic checks used by CODECTORY quality phases.
 # Project paths are relative to the repository root. Each command is an argv
 # array (never a shell string) and runs with its project's path as cwd.
+# A project may optionally set `guides` to a directory of Markdown guidance.
 projects:
   adws:
     path: adws
-    guides: guides/adws
     checks:
       - name: python-compile
         area: backend
@@ -16,7 +16,6 @@ projects:
 # lint, format, typecheck, build, and test. Example:
 #  web:
 #    path: apps/web
-#    guides: guides
 #    checks:
 #      - name: unit-tests
 #        area: frontend

@@ -86,8 +86,7 @@ class Run:
             config_path=options.config_path)
         self.checkpoint = checkpoints.load_or_create(
             self.session_dir, expected, self.continuing)
-        # Guides are core factory context, not a workflow-specific phase. Every
-        # agent receives this same packet through agents.execute().
+        # Configured guides are optional shared context for agent calls.
         self.project_guides = guidance.load(self)
 
     # ── agent map (adw_id -> per-agent coding-agent session ids) ────────────

@@ -1,4 +1,0 @@
-Research current official documentation for bootstrapping a Bun React/Vite TanStack Start frontend, then build a simple todo app in `web/` with that frontend, a NestJS backend, and a Docker Compose configuration for running PostgreSQL.
-Where: `web/` (verified to exist and currently empty); keep the frontend, NestJS backend, and Compose configuration within the requested web application scope, using the repository's configured `web` project checks.
-Done means: the app is bootstrapped and runnable with Bun, the frontend and NestJS backend implement the simple todo app end to end with PostgreSQL persistence, `docker compose` starts the database, and the configured web lint and build checks pass.
-Out of scope: authentication, deployment infrastructure beyond the PostgreSQL Compose service, and features beyond the simple todo app.

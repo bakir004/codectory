@@ -8,7 +8,7 @@ This repository is an extension of [IndyDevDan's Super Simple Software Factory](
 
 Codectory retains the upstream factory's core ideas—code-owned orchestration, typed agent handoffs, deterministic gates, and local observability—and extends them with:
 
-- **Project-aware workflows:** `projects.yaml` maps each project to its guides and deterministic checks. Relevant guides are injected into agent context for every run.
+- **Project-aware workflows:** `adws/adw_codectory_config/projects.yaml` maps each project to deterministic checks and, optionally, Markdown guides injected into agent context.
 - **Conditional research:** `adw_plan_research_build_sdlc.py` allows the planner to request current external research before refining its plan.
 - **Safe continuation:** interrupted runs can resume only when the workflow, prompt, project scope, and roster match the original execution.
 - **Clarification support:** planners can pause for structured engineer answers before committing to a plan.
@@ -49,13 +49,12 @@ All workflow entry points are under `adws/`.
 ## Repository structure
 
 ```text
-.codectory/                    Canonical factory source, templates, and guides
+.codectory/                    Canonical factory source, templates, and operating docs
 adws/                          Runnable workflow installation
   adw_*.py                     Workflow entry points
   adw_modules/                 Orchestration, gates, tracing, and permissions
-  adw_codectory_config/        Agent roster and runtime configuration
+  adw_codectory_config/        Agent roster, project paths, checks, and optional guides
   adw_data/                    Prompts, guardrails, traces, and session data
-projects.yaml                  Project guides and deterministic quality checks
 justfile                       Workflow and observability commands
 ```
 
@@ -66,7 +65,6 @@ justfile                       Workflow and observability commands
 - [Pi coding agent](https://github.com/badlogic/pi-mono)
 - [just](https://github.com/casey/just)
 - SQLite CLI for trace queries
-- Bun and Docker for the visualizer and Campus Compass demo
 - API credentials for the model providers configured in the selected roster
 
 ## Getting started
@@ -92,10 +90,10 @@ uv run adws/adw_scout.py \
 ```bash
 uv run adws/adw_simple_sdlc.py \
   "Add the requested feature and cover it with tests" \
-  --projects web
+  --projects adws
 ```
 
-The prompt can be inline text or a path to a request file. Every run must declare the projects it may modify so Codectory can load the correct guides and checks.
+The prompt can be inline text or a path to a request file. Every run must declare the projects it may modify so Codectory can load the correct checks and any optional guides.
 
 ### 4. Inspect runs
 
@@ -119,7 +117,7 @@ Use the original prompt, project scope, roster, and run ID:
 ```bash
 uv run adws/adw_simple_sdlc.py \
   "Add the requested feature and cover it with tests" \
-  --projects web \
+  --projects adws \
   --adw-id <adw_id> \
   --continue "Keep the partial work and address the reported failure"
 ```
@@ -141,13 +139,12 @@ Codectory rejects continuation when the run identity no longer matches, preventi
 - Workflows operate on the current working tree; there is no built-in branch-per-run sandbox or merge stage.
 - Provider credentials are discovered when an agent is launched rather than fully validated at startup.
 - The supported coding-agent runtime is Pi; other runtime values may be schema-valid without being implemented.
-- The demo's role selection is not an authentication or authorization system.
 - Because this repository has independent history and renamed paths, upstream updates require semantic reconciliation rather than a normal Git merge.
 
 ## Attribution
 
 Codectory is based on [Super Simple Software Factory](https://github.com/disler/super-simple-software-factory) by IndyDevDan. The upstream project supplied the foundational ADW architecture, including Python-controlled orchestration, typed envelopes, gates, agent permissions, deterministic quality phases, SQLite tracing, and the visualizer.
 
-The Codectory-specific work in this repository focuses on repackaging and extending that foundation with project guide injection, conditional research, workflow continuation and clarification, additional workflow chains, command guardrails, and the Campus Compass integration.
+The Codectory-specific work in this repository focuses on repackaging and extending that foundation with optional project guide injection, conditional research, workflow continuation and clarification, additional workflow chains, and command guardrails.
 
 The upstream project is distributed under the MIT License. Its copyright and license notice must be retained when redistributing substantial portions of the original software.

@@ -32,16 +32,18 @@ def _inside(root: Path, child: Path) -> bool:
 
 
 def _config_path(run, config_path: str | Path | None = None) -> Path:
-    """Find projects.yaml from an explicit path, repo root, or agent config dir."""
+    """Find projects.yaml explicitly, beside the agent config, or at the legacy root."""
     root = Path(run.repo_root).resolve()
     if config_path is not None:
         path = Path(config_path)
         return (root / path).resolve() if not path.is_absolute() else path.resolve()
 
-    candidates = [root / "projects.yaml"]
+    candidates: list[Path] = []
     configured = getattr(run.cfg, "config_path", "")
     if configured:
         candidates.append(Path(configured).resolve().parent / "projects.yaml")
+    # Keep existing installations working while new installs colocate both configs.
+    candidates.append(root / "projects.yaml")
     for candidate in candidates:
         if candidate.is_file():
             return candidate
@@ -87,11 +89,12 @@ def load_projects(run, config_path: str | Path | None = None) -> ProjectsConfig:
             raise RuntimeError(
                 f"invalid projects config {path}: project {project.name!r} path "
                 f"{project.path!r} resolves outside repository root {root}")
-        guides_dir = (root / project.guides).resolve()
-        if not _inside(root, guides_dir):
-            raise RuntimeError(
-                f"invalid projects config {path}: project {project.name!r} guides "
-                f"path {project.guides!r} resolves outside repository root {root}")
+        if project.guides is not None:
+            guides_dir = (root / project.guides).resolve()
+            if not _inside(root, guides_dir):
+                raise RuntimeError(
+                    f"invalid projects config {path}: project {project.name!r} guides "
+                    f"path {project.guides!r} resolves outside repository root {root}")
     return config
 
 

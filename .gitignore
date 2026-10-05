@@ -147,8 +147,9 @@ temp/
 .netlify/
 *.tsbuildinfo
 
-# codectory runtime
-adws/adw_data/sessions/
+# Codectory factory installation (installed locally, not committed)
+/adws/
+
 # Unanchored: a trace db is never committed, wherever it turns up. Two empty
 # ones had been tracked — adws/codectory.db and templates/adws/codectory.db, the second
 # of which would have stamped a fake trace db into every target repo.

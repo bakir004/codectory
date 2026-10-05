@@ -26,8 +26,8 @@ The prompt is inline text or a file path. Normally launch in the background so y
 ### Declare project scope
 
 Every launch must declare every configured project the request **might** touch.
-This is a harness decision, not an agent guess: it selects the project guides
-that every agent must read before its task prompt is sent.
+This is a harness decision, not an agent guess: it selects deterministic checks
+and any optional project guides configured for those projects.
 
 ```bash
 uv run adws/adw_simple_sdlc.py "change the web UI" --projects web
@@ -35,9 +35,9 @@ uv run adws/adw_simple_sdlc.py "add a UI action and its API" --projects web,api
 ```
 
 An omitted or unknown project name fails before an agent starts. Declare a
-project when there is any plausible cross-project change; extra scope costs
-only the relevant guide reads, while missing scope leaves an agent without a
-rule it needed.
+project when there is any plausible cross-project change; extra scope may add
+configured guide reads and checks, while missing scope omits relevant context
+and verification.
 
 ### Listen for the roster
 
